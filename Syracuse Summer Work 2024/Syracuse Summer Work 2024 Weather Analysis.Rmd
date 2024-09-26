@@ -1,0 +1,82 @@
+---
+title: "Syracuse Summer Work 2024 Weather Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##libraries
+library(tidyverse)
+library(zoo)
+library(rvest)
+library(lubridate)
+library(RSelenium)
+library(netstat)
+library(wdman)
+library(binman)
+```
+
+
+```{r}
+##connect to chromedriver - must ensure version in appdata->binman folder is up to date
+#selenium()
+#SeleniumObject <- selenium(retcommand = TRUE, check = FALSE)
+
+list_versions("chromedriver")
+Driver <- rsDriver(browser = "chrome", chromever = "127.0.6533.119", verbose = FALSE, port = free_port())
+
+RemDriver <- Driver[["client"]]
+RemDriver$open()
+RemDriver$maxWindowSize()
+
+
+##scrape weather and provide a loop with a range of dates to do so
+ScrapeCuseWeather <- function(date){
+  Sys.sleep(.1)
+  tryCatch({
+
+    RemDriver$navigate(paste("https://www.wunderground.com/history/daily/syr/date/",date,sep=""))
+    
+    WeatherTableElement <- RemDriver$findElement(using = 'xpath', '//table[@class="mat-table cdk-table mat-sort ng-star-inserted"]')
+    WeatherTableHTML <- WeatherTableElement$getPageSource()
+    WeatherTableUnlist <- read_html(WeatherTableHTML %>% unlist())
+    WeatherTables <- html_table(WeatherTableUnlist)
+    WeatherTable <- WeatherTables[[2]]
+    WeatherTable$Date <- c(as.Date(date))
+    return(WeatherTable)
+  }, error= function(e){
+    NULL
+  })
+}
+
+#TestWeatherScrape <- ScrapeCuseWeather("2024-01-04")
+
+DateList1 <- seq(as.Date("2023-08-20"), as.Date("2024-05-10"), by="days")
+DateList1 <- as.character(DateList1)
+CuseWeather <- tibble()
+for(date in DateList1){
+  Table <- ScrapeCuseWeather(date)
+  CuseWeather <- CuseWeather %>% bind_rows(Table)
+} 
+
+WeatherUniqueDates <- unique(CuseWeather$Date) %>% as.character()
+
+for(date in DateList1){
+  while(!(date%in%WeatherUniqueDates)){
+    TableScraps <- ScrapeCuseWeather(date)
+    CuseWeather <- CuseWeather %>% bind_rows(TableScraps)
+    WeatherUniqueDates <- unique(CuseWeather$Date) %>% as.character()
+  }
+}
+
+CuseWeather <- CuseWeather %>% arrange(`Date`)
+
+
+Driver$server$stop()
+
+write_csv(CuseWeather, "cuseweather.csv")
+```
+

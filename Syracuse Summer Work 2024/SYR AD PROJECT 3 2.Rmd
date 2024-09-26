@@ -1,0 +1,442 @@
+---
+title: "Datamanip-Courses"
+output: html_document
+date: "2024-06-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(zoo)
+```
+
+```{r}
+Fall23 <- read_csv("SYR AD TUTORIAL PROJECT/Course Enrollment - Fall 2023.csv")
+Spring24 <- read_csv("SYR AD TUTORIAL PROJECT/Course Enrollment - Spring 2024.csv")
+```
+
+```{r}
+#CourseReg <- rbind(Fall23, Spring24)
+```
+
+```{r}
+#write_csv(CourseReg, "CourseEnrollment.csv")
+```
+
+```{r}
+#F23 <- read_csv("SYR AD TUTORIAL PROJECT/Grades - Fall 2023(Master).csv")
+```
+
+```{r}
+#F23$Emplid <- na.locf(F23$Emplid)
+#F23$`Cum Gpa` <- na.locf(F23$`Cum Gpa`)
+
+```
+
+```{r}
+Grades <- read_csv("Grades(in).csv")
+
+#table(Grades$`Curr Participant Ind`)
+Grades$`Curr Participant Ind` <- ifelse(Grades$`Curr Participant Ind`=="Y",1,0)
+Grades <- Grades %>% rename("Curr Participant Ind Dummy" = "Curr Participant Ind")
+
+#table(Grades$`Curr Participant Ind Dummy`)
+#table(Grades$`Acad Prog Sh Desc`)
+#table(Grades$`Acad Level Begin Term`)
+#table(Grades$`Acad Level Begin Term Desc`)
+#table(Grades$`Session Code`)
+#table(Grades$`Session Sh Desc`)
+#table(Grades$`Term`)
+#table(Grades$`Grade Official`)
+
+
+Grades$`Term` <- ifelse(Grades$`Term`==1241,"Fall 2023","Spring 2024")
+#table(Grades$`Term`)
+CombosYr <- unique(Grades[c("Acad Level Begin Term","Acad Level Begin Term Desc")])
+CombosSession <- unique(Grades[c("Session Code","Session Sh Desc")])
+Grades[c("Acad Level Begin Term","Session Code")] <- list(NULL)
+CombosGrades <- unique(Grades[c("Term","Grade Official")])
+
+TermWithdrawals <- Grades %>% group_by(Term,`Grade Official`) %>% summarise(n=n())
+
+Grades <- Grades %>% rename("SUID" = "Emplid","Sport" = "Sport Descr")
+
+Grades$`Grade Official` <- ifelse(Grades$`Grade Official` == "IF","F",Grades$`Grade Official`)
+Grades$`Grade Official` <- ifelse(Grades$`Grade Official` == "ID","D",Grades$`Grade Official`)
+Grades$`Grade Official` <- ifelse(Grades$`Grade Official` == "HH","A",Grades$`Grade Official`)
+Grades$`Grade Official` <- ifelse(is.na(Grades$`Grade Official`),"F",Grades$`Grade Official`)
+
+Grades <- Grades[!(Grades$SUID == 682499468 & Grades$`Sport` == "Women's Rowing"), ]
+Grades$Sport <- ifelse(Grades$SUID == 682499468, "Two Sport Athlete (Women's Ice Hockey, Women's Rowing)", Grades$`Sport`)
+
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 993550957, "Biology", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(GradesTidy$SUID == 280657728 & Grades$`Acad Prog Sh Desc` == "BrDgtJrnl"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 280657728, "Double Major (BrDgtJrnl, IntCoAthAS)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 292641402 & Grades$`Acad Prog Sh Desc` == "InfoStyMgt"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 292641402, "Double Major (InfoStyMgt, InfoSystms)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 364811670 & Grades$`Acad Prog Sh Desc` == "Data Sci"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 364811670, "Double Major (Data Sci, Finance)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 616737261 & Grades$`Acad Prog Sh Desc` == "EntTechLdr"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 616737261, "Double Major (EntTechLdr, ProjctMgmt)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 675720637 & Grades$`Acad Prog Sh Desc` == "Mar&Fam Th"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 675720637, "Double Major (Mar&Fam Th, TrmaInfPrc)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 751929769 & Grades$`Acad Prog Sh Desc` == "Higher Ed"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 751929769, "Double Major (Higher Ed, IntCoAthAS)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 809278337 & Grades$`Acad Prog Sh Desc` == "Non-Mat G"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 809278337, "Double Major (Non-Mat G, ProjctMgmt)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 942620649 & Grades$`Acad Prog Sh Desc` == "FoodStdies"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 942620649, "Double Major (FoodStdies, Publ Admin)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 977561639 & Grades$`Acad Prog Sh Desc` == "ForensicSc"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 977561639, "Double Major (ForensicSc, Medicolegl)", Grades$`Acad Prog Sh Desc`)
+
+Grades <- Grades[!(Grades$SUID == 484458485 & Grades$`Acad Prog Sh Desc` == "Intl Rel"), ]
+Grades$`Acad Prog Sh Desc` <- ifelse(Grades$SUID == 484458485, "Double Major (Intl Rel, Sec Stds)", Grades$`Acad Prog Sh Desc`)
+
+dup <- data.frame(duplicated(Grades))
+Grades <- Grades[!duplicated(Grades), ]
+
+GradesTotals <- unique(Grades[c("SUID","Ethnic Group Code Desc All","Gender Sh Desc","Acad Prog Sh Desc","Sport","Curr Participant Ind Dummy","Participation Code Descr","Term","Acad Level Begin Term Desc","Units Taken Progress","Units Passed Progress","Total Cumulative","Curr Gpa","Cum Gpa")])
+
+CombosTerm <- unique(Grades[c("SUID","Term")])
+CombosTest <- unique(Grades[c("SUID","Term","Acad Prog Sh Desc")])
+IDs <- data.frame(table(CombosTest$SUID))
+
+
+
+
+CombosTest2 <- unique(GradesTotals[c("SUID","Term","Acad Prog Sh Desc")])
+ID2 <- data.frame(table(CombosTest2$SUID))
+CombosTest2.5 <- CombosTest2 %>% arrange(CombosTest2$SUID,CombosTest2$`Acad Prog Sh Desc`)
+
+CombosTest3 <- unique(GradesTotals[c("SUID","Acad Prog Sh Desc")])
+table(CombosTest3$SUID)
+
+GradesTot <- GradesTotals %>% group_by(GradesTotals$SUID, GradesTotals$Term) %>% summarize(`Ethnic Group Code Desc All`=`Ethnic Group Code Desc All`,`Gender Sh Desc`=`Gender Sh Desc`,`Acad Prog Sh Desc`=`Acad Prog Sh Desc`,Sport=Sport,`Curr Participant Ind Dummy`=`Curr Participant Ind Dummy`,`Participation Code Descr`=`Participation Code Descr`,`Acad Level Begin Term Desc`=`Acad Level Begin Term Desc`,`Units Taken Progress`=sum(`Units Taken Progress`), `Units Passed Progress`=sum(`Units Passed Progress`), `Total Cumulative`=sum(`Total Cumulative`), `Curr Gpa`=(sum(`Units Passed Progress`*`Curr Gpa`)) / (sum(`Units Passed Progress`)), `Cum Gpa`=(sum(`Total Cumulative`*`Cum Gpa`)) / (sum(`Total Cumulative`)))
+
+GradesTot$`Curr Gpa` <- ifelse(GradesTot$`GradesTotals$SUID` == 993550957 & GradesTot$`GradesTotals$Term`== "Fall 2023",0,GradesTot$`Curr Gpa`)
+
+dup <- data.frame(duplicated(GradesTot))
+GradesTotDiff <- GradesTot[!duplicated(GradesTot), ]
+
+table(Grades$`Grade Official`)
+
+sum(is.na(GradesTotDiff))
+
+#GradesTotDiff <- GradesTotDiff %>%
+  #rename("SUID" = "GradesTotals$SUID")
+
+#GradesTotDiff <- GradesTotDiff %>%
+  #rename("Term" = "GradesTotals$Term")
+
+GradesTotDiff <- GradesTotDiff %>%
+  mutate(`Curr Gpa` = ifelse(is.na(`Curr Gpa`), `Cum Gpa`, `Curr Gpa`))
+
+sum(is.na(GradesTotDiff))
+
+GradesTotDiff <- GradesTotDiff[-1135, ]
+
+write_csv(Grades, "GradesTidy.csv")
+
+```
+
+```{r}
+Sessions <- read_csv("SYR AD TUTORIAL PROJECT/Sessions.csv")
+
+table(Sessions$`Alternate ID`)
+table(Sessions$`Alternate ID 2`)
+#table(Sessions$`Email`)
+#table(Sessions$`Group`)
+table(Sessions$`College`)
+#table(Sessions$`Academic Year`)
+#table(Sessions$`Appointment Name`)
+#table(Sessions$`Appointment Type`)
+table(Sessions$`Appointment Reason`)
+#table(Sessions$`Created By`)
+#table(Sessions$`Created At`)
+#table(Sessions$`Status`)
+#table(Sessions$`Canceled By`)
+#table(Sessions$`Day`)
+#table(Sessions$`Date`)
+#table(Sessions$`Scheduled Start Time`)
+#table(Sessions$`Scheduled End Time`)
+#table(Sessions$`Scheduled Duration`)
+#table(Sessions$`Host`)
+#table(Sessions$`Comments`)
+table(Sessions$`Attendee Count`)
+#table(Sessions$`Location`)
+table(Sessions$`Location URL`)
+#table(Sessions$`Course Name`)
+#table(Sessions$`Course Section`)
+
+
+Sessions[c("Alternate ID","Alternate ID 2","College","Location URL","Appointment Reason")] <- list(NULL)
+
+Sessions$`Academic Year` <- replace(Sessions$`Academic Year`, Sessions$`Academic Year` %in% c("Graduate Student"),c("Graduate"))
+
+Sessions$`Course Name` <- ifelse(Sessions$`Comments`=="MAT121" ,Sessions$`Comments`,Sessions$`Course Name`)
+Sessions$`Course Section` <- ifelse(Sessions$`Attendee Count`=="M100" | Sessions$`Attendee Count`=="M106",Sessions$`Attendee Count`,Sessions$`Course Section`)
+
+Sessions$`Comments` <- ifelse(Sessions$`Comments`=="MAT121" ,NA,Sessions$`Comments`)
+Sessions$`Attendee Count` <- ifelse(Sessions$`Attendee Count`=="M100" | Sessions$`Attendee Count`=="M106",NA,Sessions$`Attendee Count`)
+
+Sessions$`Comments` <- ifelse(is.na(Sessions$`Scheduled Start Time`) | grepl("Billy Owens",Sessions$`Scheduled Start Time`),Sessions$`Scheduled Start Time`,Sessions$`Comments`)
+
+Sessions$`Scheduled Start Time` <- ifelse(grepl(" PM",Sessions$`Status`) | grepl(" AM",Sessions$`Status`),Sessions$`Status`,Sessions$`Scheduled Start Time`)
+
+Sessions$`Scheduled End Time` <- ifelse(grepl(" PM",Sessions$`Canceled By`) | grepl(" AM",Sessions$`Canceled By`),Sessions$`Canceled By`,Sessions$`Scheduled End Time`)
+
+Sessions$`Location` <- ifelse(grepl("e",Sessions$`Scheduled Duration`),Sessions$`Scheduled Duration`,Sessions$`Location`)
+
+Sessions$`Scheduled Duration` <- ifelse(grepl("0",Sessions$`Day`) | grepl("5",Sessions$`Day`),Sessions$`Day`,Sessions$`Scheduled Duration`)
+
+Sessions$`Day` <- ifelse(!grepl("@",Sessions$`Created By`),Sessions$`Created By`,Sessions$`Day`)
+
+Sessions$`Created By` <- ifelse(grepl("@",Sessions$`Academic Year`),Sessions$`Academic Year`,Sessions$`Created By`)
+
+Sessions$`Host` <- ifelse(!grepl("/20",Sessions$`Date`),Sessions$`Date`,Sessions$`Host`)
+
+Sessions$`Date` <- ifelse(!grepl("/20",Sessions$`Date`),Sessions$`Created At`,Sessions$`Date`)
+
+Sessions$`Created At` <- ifelse(grepl("/20",Sessions$`Appointment Name`),Sessions$`Appointment Name`,Sessions$`Created At`)
+
+Sessions$`Status` <- ifelse(grepl("scheduled",Sessions$`Appointment Type`) | grepl("cancelled",Sessions$`Appointment Type`),Sessions$`Appointment Type`,Sessions$`Status`)
+
+Sessions$`Canceled By` <- ifelse(grepl("scheduled",Sessions$`Appointment Type`) | grepl("cancelled",Sessions$`Appointment Type`),NA,Sessions$`Canceled By`)
+
+Sessions$`Appointment Name` <- ifelse(grepl("Tutoring",Sessions$`Group`) | grepl("Instructional Assistant",Sessions$`Group`),Sessions$`Group`,Sessions$`Appointment Name`)
+
+Sessions$`Appointment Type` <- ifelse(grepl("Tutoring",Sessions$`Primary Major`) | grepl("Instructional Assistant",Sessions$`Primary Major`),Sessions$`Primary Major`,Sessions$`Appointment Type`)
+
+Sessions$`Group` <- ifelse(grepl("Tutoring",Sessions$`Group`) | grepl("Instructional Assistant",Sessions$`Group`),"Mens Basketball",Sessions$`Group`)
+
+Sessions$`ID` <- ifelse(is.na(Sessions$`ID`),100414669,Sessions$`ID`)
+Sessions$`First Name` <- ifelse(Sessions$`ID` == 100414669,"Billy",Sessions$`First Name`)
+Sessions$`Last Name` <- ifelse(Sessions$`ID` == 100414669,"Owens",Sessions$`Last Name`)
+Sessions$`Email` <- ifelse(Sessions$`ID` == 100414669,"beowens@syr.edu",Sessions$`Email`)
+Sessions$`Primary Major` <- ifelse(Sessions$`ID` == 100414669,"Liberal Studies",Sessions$`Primary Major`)
+Sessions$`Academic Year` <- ifelse(Sessions$`ID` == 100414669,"Senior",Sessions$`Academic Year`)
+
+CombosCourse2 <- unique(Sessions[c("Course Name","Course Section")])
+
+#Sessions$`Academic Year`[is.na(Sessions$`Academic Year`)] <- "Not Specified"
+#Sessions$`Canceled By`[is.na(Sessions$`Canceled By`)] <- "Not Canceled"
+#Sessions$`Comments`[is.na(Sessions$`Comments`)] <- "No Comment"
+#Sessions$`Course Name`[is.na(Sessions$`Course Name`)] <- "Not Specified"
+#Sessions$`Course Section`[is.na(Sessions$`Course Section`)] <- "Not Specified"
+#Sessions$`Primary Major`[is.na(Sessions$`Primary Major`)] <- "Undecided"
+#Sessions$`Host`[is.na(Sessions$`Host`)] <- "Not Specified"
+#Sessions$`Location`[is.na(Sessions$`Location`)] <- "Not Specified"
+
+#sum(is.na(Sessions))
+
+#CombosAppointment <- unique(Sessions[c("Appointment Name","Appointment Type")])
+#times <- unique(Sessions[c("Scheduled Start Time","Scheduled End Time","Scheduled Duration")])
+CombosCourse <- unique(Sessions[c("Course Name","Course Section","Comments")])
+#times <- times %>% arrange("Scheduled Start Time","Scheduled End Time")
+
+#write_csv(Sessions, "SYR AD TUTORIAL PROJECT/SessionsTidy.csv")
+```
+
+```{r}
+SessionNotesTutors <- read_csv("SYR AD TUTORIAL PROJECT/Session Notes Tutors.csv")
+SessionNotesInstructionalAssistants <- read_csv("SYR AD TUTORIAL PROJECT/Session Notes Instructional Assistants.csv")
+SessionNotes <- rbind(SessionNotesInstructionalAssistants,SessionNotesTutors)
+
+table(SessionNotes$`Alternate ID`)
+table(SessionNotes$`Alternate ID 2`)
+#table(SessionNotes$`Email`)
+#table(SessionNotes$`Group`)
+table(SessionNotes$`College`)
+#table(SessionNotes$`Academic Year`)
+#table(SessionNotes$`Appointment Status`)
+#table(SessionNotes$`Report Status`)
+table(SessionNotes$`Appointment Reason`)
+#table(SessionNotes$`Created By`)
+#table(SessionNotes$`Created At`)
+#table(SessionNotes$`Status`)
+#table(SessionNotes$`Canceled By`)
+#table(SessionNotes$`Day`)
+#table(SessionNotes$`Date`)
+#table(SessionNotes$`Scheduled Start Time`)
+#table(SessionNotes$`Scheduled End Time`)
+#table(SessionNotes$`Scheduled Duration`)
+#table(SessionNotes$`Host`)
+#table(SessionNotes$`Comments`)
+#table(SessionNotes$`Location`)
+#table(SessionNotes$`Course Name`)
+#table(SessionNotes$`Course Section`)
+#table(SessionNotes$`Excused`)
+table(SessionNotes$`Report Filed`)
+
+SessionNotes$`Academic Year` <- replace(SessionNotes$`Academic Year`, SessionNotes$`Academic Year` %in% c("Graduate Student"),c("Graduate"))
+
+class(SessionNotes$`Actual Start Time`) = "Character"
+class(SessionNotes$`Actual End Time`) = "Character"
+
+CombosReport <- unique(SessionNotes[c("Report Filed","Report Filed At")])
+CombosAppointmentReport <- unique(SessionNotes[c("Appointment Status","Report Status","Report Filed At","Attended")])
+CombosCanceled <- unique(SessionNotes[c("Appointment Status","Report Status","Canceled By", "Cancel Reason")])
+
+SessionNotes$`Cancel Reason` <- ifelse(SessionNotes$`Report Status`=="cancelled" & is.na(SessionNotes$`Cancel Reason`),"No Reason For Cancellation Provided",SessionNotes$`Cancel Reason`)
+SessionNotes$`Cancel Reason` <- ifelse(SessionNotes$`Report Status`!="cancelled" & is.na(SessionNotes$`Cancel Reason`),"Not Cancelled",SessionNotes$`Cancel Reason`)
+
+
+CombosCanceled <- unique(SessionNotes[c("Appointment Status","Report Status","Canceled By", "Cancel Reason")])
+
+#SessionNotes$`Academic Year`[is.na(SessionNotes$`Academic Year`)] <- "Not Specified"
+#SessionNotes$`Actual Start Time`[is.na(SessionNotes$`Actual Start Time`)] <- "Has Not Occurred"
+#SessionNotes$`Actual End Time`[is.na(SessionNotes$`Actual End Time`)] <- "Has Not Occurred"
+#SessionNotes$`Actual Duration`[is.na(SessionNotes$`Actual Duration`)] <- "Has Not Occurred"
+#SessionNotes$`Course Name`[is.na(SessionNotes$`Course Name`)] <- "Not Specified"
+#SessionNotes$`Course Section`[is.na(SessionNotes$`Course Section`)] <- "Not Specified"
+#SessionNotes$`Excused`[is.na(SessionNotes$`Excused`)] <- "Yes"
+#SessionNotes$`Report Filed`[is.na(SessionNotes$`Report Filed`)] <- "No"
+#SessionNotes$`Report Filed At`[is.na(SessionNotes$`Report Filed At`)] <- "Not Filed"
+#SessionNotes$`Canceled By`[is.na(SessionNotes$`Report Filed At`)] <- "Not Cancelled"
+
+#SessionNotes$`Notes`[is.na(SessionNotes$`Notes`)] <- "No Notes"
+#SessionNotes$`What tasks or materials were covered during this session?`[is.na(SessionNotes$`What tasks or materials were covered during this session?`)] <- "No Answer"
+#SessionNotes$`What progress did this student make on their assignments? Were any submitted?`[is.na(SessionNotes$`What progress did this student make on their assignments? Were any submitted?`)] <- "No Answer"
+#SessionNotes$`What does this student need to do prior to their next session?`[is.na(SessionNotes$`What does this student need to do prior to their next session?`)] <- "No Answer"
+#SessionNotes$`What professor feedback has this student received since their last session?`[is.na(SessionNotes$`What professor feedback has this student received since their last session?`)] <- "No Answer"
+#SessionNotes$`Did any concerns arise during your session? If so, what were they?`[is.na(SessionNotes$`Did any concerns arise during your session? If so, what were they?`)] <- "No Answer"
+
+#SessionNotes$`Excused` <- ifelse(SessionNotes$`Excused`=="No",0,1)
+#SessionNotes <- SessionNotes %>% rename("Excused Dummy" = "Excused")
+#SessionNotes$`Report Filed` <- ifelse(SessionNotes$`Report Filed`=="Yes",1,0)
+#SessionNotes <- SessionNotes %>% rename("Report Filed Dummy" = "Report Filed")
+
+SessionNotes[c("Alternate ID","Alternate ID 2","College","Appointment Reason")] <- list(NULL)
+```
+
+```{r}
+Tutors <- read_csv("SYR AD TUTORIAL PROJECT/Tutor List - Fall 2023 - Spring 2024.csv")
+
+
+
+Tutors <- Tutors %>% mutate("Start Year" = substr(Tutors$`Start Term`,1,4))
+Tutors <- Tutors %>% mutate("Start Semester" = substr(Tutors$`Start Term`,8,9))
+
+table(Tutors$`Start Semester`)
+
+Tutors$`Start Semester` <- ifelse(Tutors$`Start Semester`=="FA","Fall",ifelse(Tutors$`Start Semester`=="SU","Summer","Spring"))
+
+Tutors$Status <- substr(Tutors$Status,5,nchar(Tutors$Status))
+Tutors$`HR Class` <- substr(Tutors$`HR Class`,5,nchar(Tutors$`HR Class`))
+
+Tutors$`IA?` <- ifelse(Tutors$`IA?`=="Yes",1,0)
+Tutors <- Tutors %>% rename("Instructional Assistant Dummy" = "IA?")
+
+#Tutors[is.na(Tutors)] <- "Not Specified"
+#Tutors$`Academic Year` <- ifelse(Tutors$`Academic Year`=="n/a","Professional",ifelse(Tutors$`Academic Year`=="Masters","Grad Student",Tutors$`Academic Year`))
+
+write_csv(Tutors, "SYR AD TUTORIAL PROJECT/TutorsTidy.csv")
+```
+
+```{r}
+Fall23 <- read_csv("Course Enrollment - Fall 2023(in).csv")
+Spring24 <- read_csv("Course Enrollment - Spring 2024(in).csv")
+
+CourseReg <- rbind(Fall23, Spring24)
+
+
+CourseReg <- CourseReg %>%
+  rename("SUID" = "School ID*")
+
+CourseReg <- CourseReg %>%
+  rename("Sport" = "Groups")
+
+
+
+CombosEnrollment <- unique(CourseReg[c("SUID","Class Code*", "Term ID*")])
+CombosEnrollmentStartTime <- unique(CourseReg[c("Start Time","End Time")])
+
+
+sum(is.na(CourseReg$`Start Time`))
+
+CourseReg$`MondayDummy` <- ifelse(CourseReg$`Monday?*`=="N",0,1)
+CourseReg$`TuesdayDummy` <- ifelse(CourseReg$`Tuesday?*`=="N",0,1)
+CourseReg$`WednesdayDummy` <- ifelse(CourseReg$`Wednesday?*`=="N",0,1)
+CourseReg$`ThursdayDummy` <- ifelse(CourseReg$`Thursday?*`=="N",0,1)
+CourseReg$`FridayDummy` <- ifelse(CourseReg$`Friday?*`=="N",0,1)
+CourseReg$`SaturdayDummy` <- ifelse(CourseReg$`Saturday?*`=="N",0,1)
+CourseReg$`SundayDummy` <- ifelse(CourseReg$`Sunday?*`=="N",0,1)
+
+DashO <- grepl("- O", CourseReg$`Class Section Code*`)
+
+table(DashO)
+
+
+
+
+CombosMajor <- unique(CourseReg[c("SUID", "Sport")])
+CombosTerm <- unique(CourseReg[c("SUID", "Primary Major Description")])
+CombosCode <- unique(CourseReg[c("College Code", "Primary Major Description")])
+
+sum(is.na(CourseReg))
+
+Code <- CombosCode %>%
+  group_by(`Primary Major Description`) %>%
+  summarize(n())
+
+Sport <- CombosMajor %>%
+  group_by(SUID) %>%
+  summarize(n())
+
+Term <- CombosTerm %>%
+  group_by(SUID) %>%
+  summarize(n())
+
+CourseReg <- CourseReg %>%
+  select(-`Term Start Date*`, -`Term End Date*`)
+
+
+
+Test <- CourseReg %>%
+  group_by(SUID, `Class Code*`, `Term ID*`) %>%
+  summarize(max(`Credits Attempted`), first(`Start Time`), first(`End Time`), max(MondayDummy), max(TuesdayDummy), max(WednesdayDummy), max(ThursdayDummy), max(FridayDummy), max(SaturdayDummy), max(SundayDummy), unique(`College Code`), unique(`Primary Major Description`), unique(Sport))
+
+
+
+Test$`unique(\`Primary Major Description\`)`[is.na(Test$`unique(\`Primary Major Description\`)`)] <- "Not Specified"
+
+TestCombo <- table(duplicated(Test[c("SUID","Class Code*")]))
+
+Test <- Test[!(Test$SUID == 682499468 & Test$`unique(Sport)` == "Women's Rowing"), ]
+Test$Sport <- ifelse(Test$SUID == 682499468, "Two Sport Athlete (Women's Ice Hockey, Women's Rowing)", Test$`unique(Sport)`)
+
+CombosReg <- unique(Test[c("SUID", "Class Code*")])
+
+
+Test[c("Sport")] <- list(NULL)
+
+Test <- Test %>%
+  rename("Major Desc" = "unique(`Primary Major Description`)")
+
+Test <- Test %>%
+  rename("College" = "unique(`College Code`)")
+
+Test <- Test %>%
+  rename("Term" = "Term ID*")
+
+Test <- Test %>%
+  rename("Sport" = "unique(Sport)")
+
+
+write_csv(Test, "enrollment.csv")
+#write_csv(GradesTotDiff, "Grades.csv")
+```
+
+

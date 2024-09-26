@@ -1,0 +1,230 @@
+---
+title: "part 3"
+output: html_document
+date: "2024-07-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+## load in libraries ##
+library(tidyverse)
+library(zoo)
+library(carat)
+library(lmtest)
+library(sandwich)
+library(car)
+```
+
+
+```{r}
+## load in csvs ##
+Professor <- read_csv("professor.csv")
+Grades_Enrollment <- read_csv("GradesEnrollment.csv")
+SportSeason <- read_csv("SportSeason.csv")
+```
+
+
+```{r}
+## keep only relevant columns, remove duplicate info ##
+Grades_Enrollment_StudentInfo <- Grades_Enrollment %>%
+  select(SUID, Class_Code, `Ethnic Group Code Desc All`, `Gender Sh Desc`, `Acad Prog Sh Desc`, Sport.x, Term, `Acad Level Begin Term Desc`, `Units Taken in Semester`, `Units Passed in Semester`, `Total Cumulative`,`Curr Gpa`, `Cum Gpa`, `Units Taken`, `Grade Official`, College)
+
+GradeCheck <- Professor %>%
+  inner_join(Grades_Enrollment_StudentInfo, by = c("SUID" = "SUID", "Course" = "Class_Code"))
+
+## Add in numeric grade scale ##
+
+GradeCheck$Grade_Numerical <- ifelse(GradeCheck$Grade == 'A', 4.0, ifelse(GradeCheck$Grade == 'A-', 3.7, ifelse(GradeCheck$Grade == 'B+', 3.3, ifelse(GradeCheck$Grade == 'B', 3.0, ifelse(GradeCheck$Grade == 'B-', 2.7, ifelse(GradeCheck$Grade == 'C+', 2.3, ifelse(GradeCheck$Grade == 'C', 2.0, ifelse(GradeCheck$Grade == 'C-', 1.7, ifelse(GradeCheck$Grade == 'D+', 1.3, ifelse(GradeCheck$Grade == 'D', 1.0, ifelse(GradeCheck$Grade == 'D-', 0.7, ifelse(GradeCheck$Grade == 'F', 0.0, NA))))))))))))
+
+GradeCheck$Grade_Official_Numerical <- ifelse(GradeCheck$`Grade Official` == 'A', 4.0, ifelse(GradeCheck$`Grade Official` == 'A-', 3.7, ifelse(GradeCheck$`Grade Official` == 'B+', 3.3, ifelse(GradeCheck$`Grade Official` == 'B', 3.0, ifelse(GradeCheck$`Grade Official` == 'B-', 2.7, ifelse(GradeCheck$`Grade Official` == 'C+', 2.3, ifelse(GradeCheck$`Grade Official` == 'C', 2.0, ifelse(GradeCheck$`Grade Official` == 'C-', 1.7, ifelse(GradeCheck$`Grade Official` == 'D+', 1.3, ifelse(GradeCheck$`Grade Official` == 'D', 1.0, ifelse(GradeCheck$`Grade Official` == 'D-', 0.7, ifelse(GradeCheck$Grade == 'F', 0.0, NA))))))))))))
+
+GradeCheck[c("Sport")] <- list(NULL)
+GradeCheck <- GradeCheck %>%
+  rename("Sport" = "Sport.x")
+
+GradeCheck <- GradeCheck %>%
+  mutate(GradeDiff = Grade_Official_Numerical - Grade_Numerical)
+
+```
+
+
+```{r}
+## Remove NAs, add column for Grade Check count ##
+
+GradeCheck2 <- GradeCheck %>%
+  subset(!is.na(Grade_Official_Numerical) & !is.na(Grade_Numerical))
+
+GradeCheck2 <- GradeCheck2 %>%
+  group_by(SUID, Course, Term) %>%
+  summarize(Grade_Numerical = Grade_Numerical, Grade_Official_Numerical = Grade_Official_Numerical, GradeDiff = GradeDiff, AtRiskDummy = AtRiskDummy) %>%
+  mutate(CheckCount = n())
+
+table(GradeCheck2$CheckCount)
+
+NumberofChecks <- GradeCheck2 %>%
+  subset(CheckCount > 2)
+
+AtRisk <- GradeCheck2 %>%
+  subset(AtRiskDummy == 1)
+
+LowerAchievers <- GradeCheck2 %>%
+  subset(!Grade_Official_Numerical >= 3.7 & !Grade_Official_Numerical <= 2.3)
+```
+
+```{r}
+## Run lm() comparing number of grade checks and final grade ##
+GradeCheckMod <- lm(GradeDiff ~ Grade_Numerical + AtRiskDummy + CheckCount, data = GradeCheck2)
+summary(GradeCheckMod)
+
+car::vif(GradeCheckMod)
+bptest(GradeCheckMod)
+bptest(GradeCheckMod, ~ Grade_Numerical*AtRiskDummy*CheckCount + I(Grade_Numerical^2) + I(AtRiskDummy^2) + I(CheckCount^2), data = GradeCheck2)
+
+coeftest(GradeCheckMod, vcov=hccm)
+
+
+
+CheckCountMod <- lm(GradeDiff ~ Grade_Numerical + AtRiskDummy + CheckCount, data = NumberofChecks)
+summary(CheckCountMod)
+
+car::vif(CheckCountMod)
+bptest(CheckCountMod)
+bptest(CheckCountMod, ~ Grade_Numerical*AtRiskDummy*CheckCount + I(Grade_Numerical^2) + I(AtRiskDummy^2) + I(CheckCount^2), data = NumberofChecks)
+
+coeftest(CheckCountMod, vcov=hccm)
+
+
+LowAchieversMod <- lm(GradeDiff ~ Grade_Numerical + AtRiskDummy + CheckCount, data = LowerAchievers)
+summary(LowAchieversMod)
+
+car::vif(LowAchieversMod)
+bptest(LowAchieversMod)
+bptest(LowAchieversMod, ~ Grade_Numerical*AtRiskDummy*CheckCount + I(Grade_Numerical^2) + I(AtRiskDummy^2) + I(CheckCount^2), data = LowerAchievers)
+
+coeftest(LowAchieversMod, vcov=hccm)
+
+
+sum(GradeCheck2$Grade_Official_Numerical >= 3.7)
+
+sum(GradeCheck2$Grade_Official_Numerical <= 2.3)
+
+```
+
+
+
+
+
+```{r}
+## Add in sport in season dummy to compare grades in and out of season ##
+GradeCheck$CollegeCode <- substr(GradeCheck$Course, 1, 3)
+
+GCMerge <- merge(GradeCheck, SportSeason, by = "Sport")
+
+GCMerge$SD <- as.Date(GCMerge$SD, format = "%m/%d/%Y")
+GCMerge$ED <- as.Date(GCMerge$ED, format = "%m/%d/%Y")
+GCMerge$`Submitted On` <- as.Date(GCMerge$`Submitted On`, format = "%m/%d/%Y")
+
+GCMerge$InSeasonDummy <- as.integer(GCMerge$`Submitted On` >= GCMerge$SD & GCMerge$`Submitted On` <= GCMerge$ED)
+
+#write_csv(GradeCheck, "GradeCheck.csv")
+#write_csv(GCMerge, "GCMerge.csv")
+```
+
+
+```{r}
+## Create new DFs to assess WDs and characteristics ##
+Withdrawals <- Grades_Enrollment %>%
+  subset(`Grade Official` == "WD") %>%
+  group_by(Class_Code) %>%
+  summarize(n = n())
+
+WithdrawalsCollege <- Grades_Enrollment %>%
+  subset(`Grade Official` == "WD") %>%
+  group_by(College) %>%
+  summarize(n=n())
+
+ParticipantsCollege <- Grades_Enrollment %>%
+  group_by(College) %>%
+  summarize(n = n())
+
+WDandFs <- Grades_Enrollment %>%
+  subset(`Grade Official` == "WD" | `Grade Official` == "F") %>%
+  group_by(Class_Code) %>%
+  summarize(n = n())
+
+Participants <- Grades_Enrollment %>%
+  group_by(Class_Code) %>%
+  summarize(n = n())
+
+WDPercentage <- merge(Withdrawals, Participants, by = "Class_Code")
+FWDPercentage <- merge(WDandFs, Participants, by = "Class_Code")
+CollegePercentage <- merge(WithdrawalsCollege, ParticipantsCollege, by = "College")
+
+CollegePercentage <- CollegePercentage %>%
+  mutate(CollegePercentage = n.x/n.y*100) %>%
+  subset(n.y >= 5) %>%
+  filter(!is.na(College))
+
+WDPercentage <- WDPercentage %>%
+  mutate(DropPercentage = n.x/n.y*100) %>%
+  subset(n.y >= 5)
+
+FWDPercentage <- FWDPercentage %>%
+  mutate(DropPercentage = n.x/n.y*100) %>%
+  subset(n.y >= 5)
+
+#write_csv(WDPercentage, "WDP.csv")
+```
+
+
+```{r}
+## Create dummies based on college, run lm() to assess correlation between college and withdrawals ##
+Colleges <- CollegePercentage %>%
+  mutate(isArtsSci = ifelse(College == "Arts & Sciences", 1, 0), isMax = ifelse(College == "Maxwell", 1, 0), isVisPA = ifelse(College == "Visual & Performing Arts", 1, 0), isEng = ifelse(College == "Engineering & Computer Science", 1, 0), isEdu = ifelse(College == "Education", 1, 0), isMan = ifelse(College == "Management", 1, 0), isSHD = ifelse(College == "Sport and Human Dynamics", 1, 0), isPubCom = ifelse(College == "Public Communications", 1, 0))
+
+CollegeMod <- lm(CollegePercentage ~ isArtsSci + isMax + isVisPA + isEng + isEdu + isMan + isSHD , data = Colleges)
+summary(CollegeMod)
+```
+
+```{r}
+## Count up class codes ##
+Grades_Enrollment <- Grades_Enrollment %>%
+  mutate(Class_Code_First_Three = ifelse(is.na(Class_Code), NA, substr(Class_Code, 1, 3)))
+
+SubjectCount <- Grades_Enrollment %>%
+  count(Class_Code_First_Three, name = "Count")
+
+GradeCheckCount <- GradeCheck %>%
+  mutate(Class_Code_First_Three = ifelse(is.na(Course), NA, substr(Course, 1, 3)))
+
+GradeCheckCount <- GradeCheckCount %>%
+  count(Class_Code_First_Three, name = "Count of Checks")
+
+SubjectCount <- merge(SubjectCount, GradeCheckCount)
+
+write_csv(SubjectCount, "SubjectCount.csv")
+```
+
+```{r}
+## Track changes in college ##
+CollegeChanges <- Grades_Enrollment %>%
+  select(SUID, `Acad Prog Sh Desc`, Term, College) %>%
+  group_by(SUID, Term) %>%
+  mutate(College = ifelse(is.na(College), `Acad Prog Sh Desc`, College),
+         College = case_when(
+           College == "A&S" ~ "Arts & Sciences",
+           College == "Ecs" ~ "Engineering & Computer Science",
+           College == "Sport&Hu" ~ "Sport and Human Dynamics",
+           College == "Ist" ~ "Information Studies",
+           College == "PC" ~ "Public Communications",
+           College == "VPA-Comm&R" ~ "Visual & Performing Arts",
+           College == "VPA Design" ~ "Visual & Performing Arts",
+           TRUE ~ College)) %>%
+  distinct()
+```
+

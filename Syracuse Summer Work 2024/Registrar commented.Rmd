@@ -1,0 +1,333 @@
+---
+title: "Syracuse Summer Registrar Data"
+output: html_document
+date: "2024-07-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## Load in libraries ##
+library(tidyverse)
+library(zoo)
+library(carat)
+library(lmtest)
+library(sandwich)
+library(car)
+```
+
+```{r}
+## Load in libraries - make term code categorical ##
+Registrar <- read_csv("Registrar data.csv")
+GEnrollment <- read_csv("GradesEnrollment.csv")
+
+Registrar$Term <- ifelse(Registrar$Term == 1241, "Fall 2023", "Spring 2024")
+```
+
+```{r}
+## join transfer student characteristics with main enrollment table ##
+TransferStudents <- left_join(GEnrollment, Registrar, by = c("SUID" = "Emplid", "Term" = "Term"))
+
+ComboJoinRegSport <- unique(TransferStudents[c("Sport.x", "Team Group Description")])
+ComboJoinRegSport <- ComboJoinRegSport %>%
+  mutate(IsConsistent = ifelse("Sport.x" == "Team Group Description", 1, 0))
+
+TransferStudents <- TransferStudents %>%
+  select(-`Team Group Description`)
+
+Transfers <- TransferStudents %>%
+  subset(`Admit Type` == "T") %>%
+  select(SUID, Term, `Admit Type`, College) %>%
+  group_by(SUID, Term)
+
+Transfers <- Transfers[!duplicated(Transfers), ]
+
+Transfers <- na.omit(Transfers)
+
+## Count basic stats of transfer students ##
+
+CollegeTransferInto <- Transfers %>%
+  group_by(College) %>%
+  summarize(n = n())
+
+CollegeTotal <- TransferStudents %>%
+  subset(!is.na(`Admit Type`)) %>%
+  select(SUID, Term, `Admit Type`, College) %>%
+  group_by(SUID, Term)
+
+CollegeTotal <- CollegeTotal[!duplicated(CollegeTotal), ]
+CollegeTotal <- na.omit(CollegeTotal)
+
+CollegeTotalTable <- CollegeTotal %>%
+  group_by(College) %>%
+  summarize(n = n())
+
+CollegeTransferMerge <- merge(CollegeTransferInto, CollegeTotalTable, by = "College")
+
+CollegeTransferMerge <- CollegeTransferMerge %>%
+  mutate(PercentageofTransfers = n.x/n.y*100)
+
+#write_csv(CollegeTransferMerge, "TransfersIn.csv")
+```
+
+
+
+```{r}
+## calculate average hours awarded , how that changes by college ##
+
+TransferHours <- TransferStudents %>%
+  subset(`Admit Type` == "T") %>%
+  select(SUID, Term, `Admit Type`, `Units Taken in Semester`, `Units Passed in Semester`, `Total Cumulative`, `Acad Level Begin Term Desc`) %>%
+  group_by(SUID)
+
+TransferHours <- TransferHours[!duplicated(TransferHours), ]
+TransferHours <- na.omit(TransferHours)
+
+TransferHours <- TransferHours %>%
+  mutate(TransferCredits = `Total Cumulative`- `Units Passed in Semester`)
+
+TransferNumbers <- TransferHours %>%
+  group_by(Term) %>%
+  summarize(n=n(), TotalTransferCredits = sum(TransferCredits), AvgTransferCredits = mean(TransferCredits))
+
+```
+
+```{r}
+## calculate hours awarded for class standing ##
+CountbyLevel <- TransferHours %>%
+  group_by(`Acad Level Begin Term Desc`) %>%
+  summarize(Level_Count = n(), "MeanHours" = mean(TransferCredits))
+
+write_csv(CountbyLevel, "AcademicStanding - Transfers.csv")
+```
+
+```{r}
+## Tidy names of colleges ##
+CollegeChanges <- GEnrollment %>%
+  select(SUID, `Acad Prog Sh Desc`, Term, College) %>%
+  group_by(SUID, Term) %>%
+  arrange(College, SUID) %>%
+  mutate(College = ifelse(is.na(College), `Acad Prog Sh Desc`, College),
+         College = case_when(
+           College == "A&S" ~ "Arts & Sciences",
+           `Acad Prog Sh Desc` == "MAX-CAS" ~ "Arts & Sciences",
+           College == "Ecs" ~ "Engineering & Computer Science",
+           College == "Sport&Hu" ~ "Sport and Human Dynamics",
+           College == "Ist" ~ "Information Studies",
+           College == "PC" ~ "Public Communications",
+           College == "VPA-Comm&R" ~ "Visual & Performing Arts",
+           College == "VPA Design" ~ "Visual & Performing Arts",
+           College == "AdvMedMgmt" ~ "Public Communications",
+           College == "Arch" ~ "Architecture",
+           College == "Arch-MArch" ~ "Professional Studies",
+           College == "BioMedEngr" ~ "Engineering & Computer Science",
+           College == "BrDgtJrnl" ~ "Professional Studies",
+           College == "Bus Admin" ~ "Professional Studies",
+           College == "ClMntHlthC" ~ "Professional Studies",
+           College == "BrDgtJrnl" ~ "Professional Studies",
+           College == "Ent & EE" ~ "Management",
+           College == "IntCoAthAS" ~ "Management",
+           College == "PrfStudies" ~ "Professional Studies",
+           College == "SpVenEvntM" ~ "Sport and Human Dynamics",
+           College == "TV,Rad&Flm" ~ "Visual & Performing Arts",
+           College == "VPA-Art" ~ "Visual & Performing Arts",
+           TRUE ~ College)) %>%
+  distinct()
+
+CollegeChanges <- CollegeChanges %>%
+  filter(!(is.na(`Acad Prog Sh Desc`) & SUID == 594132997))
+
+CollegeChanges$College <- ifelse(grepl("Dual", CollegeChanges$`Acad Prog Sh Desc`), CollegeChanges$`Acad Prog Sh Desc`, CollegeChanges$College)
+
+## Count distinct number of transfers into different colleges ##
+
+CollegeChanges <- CollegeChanges[!duplicated(CollegeChanges), ]
+
+CountofID <- CollegeChanges %>%
+  count(SUID, Term)
+
+CollegeChanges2 <- CollegeChanges %>%
+  group_by(SUID) %>%
+  summarize(n = n_distinct(College))
+
+SUIDList <- CollegeChanges2 %>%
+  filter(n > 1) %>%
+  pull(SUID)
+
+FilteredCollegeChanges <- CollegeChanges %>%
+  filter(SUID %in% SUIDList)
+
+
+
+## count distinct major changes ##
+
+
+
+
+MajorChanges <- GEnrollment %>%
+  select(SUID, Term, `Major Desc`) %>%
+  filter(!is.na(`Major Desc`)) %>%
+  distinct()
+
+MajorChanges2 <- MajorChanges %>%
+  group_by(SUID) %>%
+  summarize(n = n_distinct(`Major Desc`))
+
+SUIDListMajors <- MajorChanges2 %>%
+  filter(n > 1) %>%
+  pull(SUID)
+
+FilteredMajorChanges <- MajorChanges %>%
+  filter(SUID %in% SUIDListMajors)
+
+FilteredMajorChanges <- FilteredMajorChanges %>%
+  group_by(`Major Desc`) %>%
+  summarize(
+    FallCount = sum(Term == "Fall 2023"),
+    SpringCount = sum(Term == "Spring 2024")
+  )
+
+FilteredCollegeChanges <- FilteredCollegeChanges %>%
+  group_by(College) %>%
+  summarize(
+    FallCount = sum(Term == "Fall 2023"),
+    SpringCount = sum(Term == "Spring 2024")
+  )
+
+write_csv(FilteredCollegeChanges, "FilteredCollegeChanges.csv")
+write_csv(FilteredMajorChanges, "FilteredMajorChanges.csv")
+
+```
+
+```{r}
+## Filter to only include undeclared students, make undeclared uniformly attributed ##
+
+UndeclaredStudents <- MajorChanges %>%
+  subset(grepl("Undeclared", `Major Desc`) | grepl("-U", `Major Desc`))
+
+UndeclaredSUIDs <- UndeclaredStudents %>%
+  pull(SUID)
+
+GEnrollment$`Participation Code Descr` <- ifelse(GEnrollment$`Participation Code Descr` == "Recruited", 1, 0)
+
+UndeclaredStudents <- UndeclaredStudents %>%
+  group_by(SUID) %>%
+  summarize(n = n_distinct(Term))
+
+UndeclaredStudentCharacteristics <- GEnrollment %>%
+  select(SUID, `Ethnic Group Code Desc All`, `Gender Sh Desc`, `Major Desc`, `Curr Participant Ind Dummy`, `Participation Code Descr`, `Acad Level Begin Term Desc`, `Curr Gpa`, `Cum Gpa`, Sport.x, `Units Taken in Semester`) %>%
+  subset(SUID %in% UndeclaredSUIDs) %>%
+  distinct()
+
+UndeclaredStudentCharacteristics <- merge(UndeclaredStudentCharacteristics, UndeclaredStudents, by = "SUID")
+
+UndeclaredStudentCharacteristics <- UndeclaredStudentCharacteristics %>%
+  subset(grepl("Undeclared", `Major Desc`) | grepl("-U", `Major Desc`))
+
+ UndeclaredStudentCharacteristics <- UndeclaredStudentCharacteristics %>%
+   mutate(ClassLevel = case_when(`Acad Level Begin Term Desc` == "Freshman" ~ 1,
+                                 `Acad Level Begin Term Desc` == "Sophomore" ~ 2,
+                                 `Acad Level Begin Term Desc` == "Junior" ~ 3,
+                                 TRUE ~ NA))
+
+
+UndeclaredStudentCharacteristics2 <- UndeclaredStudentCharacteristics %>%
+  group_by(SUID) %>%
+  summarize(`Curr Gpa` = mean(`Curr Gpa`), `Cum Gpa` = mean(`Cum Gpa`), `Units Taken in Semester` = mean(`Units Taken in Semester`), `Ethnic Group Code Desc All` = `Ethnic Group Code Desc All`, `Gender Sh Desc` = `Gender Sh Desc`, `Major Desc` = `Major Desc`, `Curr Participant Ind Dummy` = `Curr Participant Ind Dummy`, `Participation Code Descr` = `Participation Code Descr`, ClassLevel = mean(ClassLevel), Sport.x = Sport.x, n = n) %>%
+  distinct()
+
+UndeclaredStudentCharacteristics2 <- UndeclaredStudentCharacteristics2 %>%
+  filter(!(is.na(`Gender Sh Desc`) & SUID == 594132997))
+
+write_csv(UndeclaredStudentCharacteristics2, "UndeclaredCharacteristics.csv")
+```
+
+```{r}
+## lm() seeing if we can predict undeclared declaration ##
+
+UMod1 <- lm(n ~ `Curr Gpa` + `Cum Gpa` + `Curr Participant Ind Dummy` + `Participation Code Descr` + `Units Taken in Semester`, data = UndeclaredStudentCharacteristics2)
+summary(UMod1)
+
+
+car::vif(UMod1)
+bptest(UMod1)
+#bptest(UMod1, ~ `Curr Gpa`*`Cum Gpa`*`Curr Participant Ind Dummy`*`Participation Code Descr`*`Units Taken in Semester` + I(`Curr Gpa`^2) + I(`Cum Gpa`^2) + I(`Curr Participant Ind Dummy`^2 + I(`Participation Code Descr`^2) + I(`Units Taken in Semester`^2)), data = UMod1)
+
+coeftest(UMod1, vcov=hccm)
+
+
+#UMod2 <- lm(n ~ Sport.x, data = UndeclaredStudentCharacteristics2)
+#summary(UMod2)
+
+#UMod3 <- lm(n ~ `Ethnic Group Code Desc All`, data = UndeclaredStudentCharacteristics2)
+#summary(UMod3)
+
+#UMod4 <- lm(n ~ `Gender Sh Desc`, data = UndeclaredStudentCharacteristics2)
+#summary(UMod4)
+```
+
+
+
+```{r}
+## Withdrawals filtered, characteristics of withdrawn classes tracked ##
+
+WDs <- GEnrollment %>%
+  select(Class_Code, `Grade Official`, College, `Major Desc`) %>%
+  group_by(Class_Code) %>%
+  summarize(n = n(), NumberWD = sum(`Grade Official` == "WD" & !is.na(`Grade Official`)), WDPct = NumberWD/n*100)
+
+
+CollegeWDs <- GEnrollment %>%
+  select(Class_Code, `Grade Official`, College, `Major Desc`, `Acad Prog Sh Desc`) %>%
+  group_by(College) %>%
+  mutate(College = ifelse(is.na(College), `Acad Prog Sh Desc`, College),
+         College = case_when(
+           College == "A&S" ~ "Arts & Sciences",
+           `Acad Prog Sh Desc` == "MAX-CAS" ~ "Arts & Sciences",
+           College == "Ecs" ~ "Engineering & Computer Science",
+           College == "Sport&Hu" ~ "Sport and Human Dynamics",
+           College == "Ist" ~ "Information Studies",
+           College == "PC" ~ "Public Communications",
+           College == "VPA-Comm&R" ~ "Visual & Performing Arts",
+           College == "VPA Design" ~ "Visual & Performing Arts",
+           College == "AdvMedMgmt" ~ "Public Communications",
+           College == "Arch" ~ "Architecture",
+           College == "Arch-MArch" ~ "Professional Studies",
+           College == "BioMedEngr" ~ "Engineering & Computer Science",
+           College == "BrDgtJrnl" ~ "Professional Studies",
+           College == "Bus Admin" ~ "Professional Studies",
+           College == "ClMntHlthC" ~ "Professional Studies",
+           College == "BrDgtJrnl" ~ "Professional Studies",
+           College == "Ent & EE" ~ "Management",
+           College == "IntCoAthAS" ~ "Management",
+           College == "PrfStudies" ~ "Professional Studies",
+           College == "SpVenEvntM" ~ "Sport and Human Dynamics",
+           College == "TV,Rad&Flm" ~ "Visual & Performing Arts",
+           College == "VPA-Art" ~ "Visual & Performing Arts",
+           TRUE ~ College)) %>%
+  distinct()
+
+CollegeWDs$College <- ifelse(grepl("Dual", CollegeWDs$`Acad Prog Sh Desc`), CollegeWDs$`Acad Prog Sh Desc`, CollegeWDs$College)
+CollegeWDs <- CollegeWDs[!duplicated(CollegeWDs), ]
+
+
+CollegeWDs <- CollegeWDs %>%
+  summarize(n = n(), NumberWD = sum(`Grade Official` == "WD" & !is.na(`Grade Official`)), WDPct = NumberWD/n*100)
+
+MajorWDs <- GEnrollment %>%
+  select(Class_Code, `Grade Official`, College, `Major Desc`) %>%
+  group_by(`Major Desc`) %>%
+  summarize(n = n(), NumberWD = sum(`Grade Official` == "WD" & !is.na(`Grade Official`)), WDPct = NumberWD/n*100)
+
+
+ClassWD <- WDs %>%
+  group_by(Class_Code) %>%
+  summarize(n = n())
+
+write_csv(ClassWD, "ClassWD.csv")
+write_csv(CollegeWDs, "CollegeWDs.csv")
+write_csv(MajorWDs, "MajorWDs.csv")
+```
+

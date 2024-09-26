@@ -1,0 +1,1158 @@
+---
+title: "Syracuse Athletics Summer Work 2024 - Joining"
+output: html_document
+date: "2024-07-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##libraries
+library(tidyverse)
+library(zoo)
+library(carat)
+library(lmtest)
+library(sandwich)
+library(car)
+library(psych)
+library(broom)
+library(lubridate)
+```
+
+```{r}
+##sessions and session notes
+SessionsTidy <- read_csv("SessionsTidy.csv")
+SessionNotesTidy <- read_csv("SessionNotesTidy.csv")
+```
+
+```{r}
+##check affirmation blanks - did not end up mattering
+SessionNotesAffirmationBlanks <- subset(SessionNotesTidy, is.na(SessionNotesTidy$`I affirm that I have understood and upheld all applicable institutional- conference- and NCAA rules in conducting this session.`))
+table(SessionNotesAffirmationBlanks$`Appointment Status`)
+#table(SessionNotesAffirmationBlanks$`Report Filed At`)
+
+SessionNotesTidyAttend <- subset(SessionNotesTidy, is.na(Attended) & `Appointment Status`=="completed")
+
+##join Sessions and Session Notes Tidy
+SessionsJoined <- SessionsTidy %>% full_join(SessionNotesTidy, by = c("ID"="Unique ID", "Date"="Date", "Scheduled Start Time"="Scheduled Start Time","Host"="Host"))
+
+##Take out holiday sessions that were incorrectly marked
+SessionsJoined$`Date` <- as.Date(SessionsJoined$`Date`, "%m/%d/%Y")
+
+HolidaySessions <- subset(SessionsJoined, (`Date`>="2023-10-09" & `Date`<="2023-10-10") | (`Date`>="2023-11-19" & `Date`<="2023-11-26") | (`Date`>="2024-03-10" & `Date`<="2024-03-17"))
+HolidaySessionsClean <- subset(HolidaySessions, Status=="completed")
+
+SessionsJoined <- filter(SessionsJoined, !(((`Date`>="2023-10-09" & `Date`<="2023-10-10") | (`Date`>="2023-11-19" & `Date`<="2023-11-26") | (`Date`>="2024-03-10" & `Date`<="2024-03-17")) & (Status!="completed")))
+
+
+#SessionsJoinedKeys <- SessionsJoined %>% select(Host.x, Host.y, ID, Date, `Scheduled Start Time`, Status)
+
+SessionNotesTidySort1 <- SessionNotesTidy %>% arrange(`Unique ID`,Host,Date,`Scheduled Start Time`) %>% select(`Unique ID`,Host,Date,`Scheduled Start Time`)
+
+##get rid of duplicates
+SessionNotesDuplicated <- SessionNotesTidySort1[duplicated(SessionNotesTidySort1), ]
+
+##fix naming inconsistency
+SessionsJoined$`First Name.x` <- ifelse(SessionsJoined$`First Name.x`=="Nick" & SessionsJoined$`First Name.y`=="Nicholas","Nicholas",SessionsJoined$`First Name.x`)
+
+##check for inconsistencies
+ComboJoinFirstName <- unique(SessionsJoined[c("First Name.x","First Name.y")])
+ComboJoinFirstName <- ComboJoinFirstName %>% mutate(IsConsistent=ifelse(`First Name.x`==`First Name.y`,1,0))
+ComboJoinLastName <- unique(SessionsJoined[c("Last Name.x","Last Name.y")])
+ComboJoinLastName <- ComboJoinLastName %>% mutate(IsConsistent=ifelse(`Last Name.x`==`Last Name.y`,1,0))
+ComboJoinEmail <- unique(SessionsJoined[c("Email.x","Email.y")])
+ComboJoinEmail <- ComboJoinEmail %>% mutate(IsConsistent=ifelse(`Email.x`==`Email.y`,1,0))
+#ComboJoinHost <- unique(SessionsJoined[c("Host.x","Host.y")])
+#ComboJoinHost <- ComboJoinHost %>% mutate(IsConsistent=ifelse(`Host.x`==`Host.y`,1,0))
+ComboJoinGroup <- unique(SessionsJoined[c("Group.x","Group.y")])
+ComboJoinGroup <- ComboJoinGroup %>% mutate(IsConsistent=ifelse(`Group.x`==`Group.y`,1,0))
+ComboJoinPM <- unique(SessionsJoined[c("Primary Major.x","Primary Major.y")])
+ComboJoinPM <- ComboJoinPM %>% mutate(IsConsistent=ifelse(`Primary Major.x`==`Primary Major.y`,1,0))
+ComboJoinYr <- unique(SessionsJoined[c("Academic Year.x","Academic Year.y")])
+ComboJoinYr <- ComboJoinYr %>% mutate(IsConsistent=ifelse(`Academic Year.x`==`Academic Year.y`,1,0))
+ComboJoinType <- unique(SessionsJoined[c("Appointment Type.x","Appointment Type.y")])
+ComboJoinType <- ComboJoinType %>% mutate(IsConsistent=ifelse(`Appointment Type.x`==`Appointment Type.y`,1,0))
+ComboJoinStatus <- unique(SessionsJoined[c("Appointment Status","Status")])
+ComboJoinStatus<- ComboJoinStatus %>% mutate(IsConsistent=ifelse(`Appointment Status`==`Status`,1,0))
+ComboJoinCB <- unique(SessionsJoined[c("Canceled By.x","Canceled By.y")])
+ComboJoinCB <- ComboJoinCB %>% mutate(IsConsistent=ifelse(`Canceled By.x`==`Canceled By.y`,1,0))
+ComboJoinDay <- unique(SessionsJoined[c("Day.x","Day.y")])
+ComboJoinDay <- ComboJoinDay %>% mutate(IsConsistent=ifelse(`Day.x`==`Day.y`,1,0))
+ComboJoinLocation <- unique(SessionsJoined[c("Location.x","Location.y")])
+ComboJoinLocation <- ComboJoinLocation %>% mutate(IsConsistent=ifelse(`Location.x`==`Location.y`,1,0))
+ComboJoinEnd <- unique(SessionsJoined[c("Scheduled End Time.x","Scheduled End Time.y")])
+ComboJoinEnd <- ComboJoinEnd %>% mutate(IsConsistent=ifelse(`Scheduled End Time.x`==`Scheduled End Time.y`,1,0))
+ComboJoinDuration <- unique(SessionsJoined[c("Scheduled Duration.x","Scheduled Duration.y")])
+ComboJoinDuration <- ComboJoinDuration %>% mutate(IsConsistent=ifelse(`Scheduled Duration.x`==`Scheduled Duration.y`,1,0))
+ComboJoinCourseName <- unique(SessionsJoined[c("Course Name.x","Course Name.y")])
+ComboJoinCourseName <- ComboJoinCourseName %>% mutate(IsConsistent=ifelse(`Course Name.x`==`Course Name.y`,1,0))
+ComboJoinCourseSection <- unique(SessionsJoined[c("Course Section.x","Course Section.y")])
+ComboJoinCourseSection <- ComboJoinCourseSection %>% mutate(IsConsistent=ifelse(`Course Section.x`==`Course Section.y`,1,0))
+
+
+##check completed and attended sessions
+Completed <- subset(SessionsJoined,`Appointment Status`=="completed")
+
+SessionsJoined$Attended <- ifelse(SessionsJoined$Attended=="Yes",1,0)
+
+##format time columns and set up rounded time for weather analysis
+SessionsJoined$`Scheduled Start Time` <- as.POSIXct(SessionsJoined$`Scheduled Start Time`)
+SessionsJoined$`Scheduled End Time.x` <- as.POSIXct(SessionsJoined$`Scheduled End Time.x`)
+SessionsJoined$`Scheduled End Time.y` <- as.POSIXct(SessionsJoined$`Scheduled End Time.y`)
+SessionsJoined <- SessionsJoined %>% mutate(`Rounded Start Time`=`Scheduled Start Time`)
+
+SessionsJoined$`Rounded Start Time` <- ifelse(substr(SessionsJoined$`Scheduled Start Time`,15,16)==45, round_date(SessionsJoined$`Scheduled Start Time`, "hours"), floor_date(SessionsJoined$`Scheduled Start Time`, "hours"))
+SessionsJoined$`Rounded Start Time` <- as.POSIXct(trunc(Sys.time(), units="days") + SessionsJoined$`Rounded Start Time`)
+
+SessionsJoined$`Rounded Start Time` <- format(SessionsJoined$`Rounded Start Time`, "%I:%M %p")
+SessionsJoined$`Scheduled Start Time` <- format(SessionsJoined$`Scheduled Start Time`, "%I:%M %p")
+SessionsJoined$`Scheduled End Time.x` <- format(SessionsJoined$`Scheduled End Time.x`, "%I:%M %p")
+SessionsJoined$`Scheduled End Time.y` <- format(SessionsJoined$`Scheduled End Time.y`, "%I:%M %p")
+
+##choose which column has accurate info and keep it 
+SessionsJoined$`Course Name.y` <- ifelse(SessionsJoined$`Course Name.x`!="Not Specified" | !is.na(SessionsJoined$`Course Name.x`) & (SessionsJoined$`Course Name.y`=="Not Specified" | is.na(SessionsJoined$`Course Name.y`)), SessionsJoined$`Course Name.x`, SessionsJoined$`Course Name.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Course Name`=`Course Name.y`)
+
+SessionsJoined$`Course Section.y` <- ifelse(!is.na(SessionsJoined$`Course Section.x`) & is.na(SessionsJoined$`Course Section.y`), SessionsJoined$`Course Section.x`, SessionsJoined$`Course Section.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Course Section`=`Course Section.y`)
+
+SessionsJoined$`Day.y` <- ifelse(!is.na(SessionsJoined$`Day.x`) & is.na(SessionsJoined$`Day.y`), SessionsJoined$`Day.x`, SessionsJoined$`Day.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Day`=`Day.y`)
+
+SessionsJoined$`Scheduled Duration.y` <- ifelse(!is.na(SessionsJoined$`Scheduled Duration.x`) & is.na(SessionsJoined$`Scheduled Duration.y`), SessionsJoined$`Scheduled Duration.x`, SessionsJoined$`Scheduled Duration.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Scheduled Duration`=`Scheduled Duration.y`)
+
+SessionsJoined$`Email.x` <- ifelse(!is.na(SessionsJoined$`Email.y`) & is.na(SessionsJoined$`Email.x`), SessionsJoined$`Email.y`, SessionsJoined$`Email.x`)
+SessionsJoined <- SessionsJoined %>% rename(`Email`=`Email.x`)
+
+SessionsJoined$`Scheduled End Time.y` <- ifelse(!is.na(SessionsJoined$`Scheduled End Time.x`) & is.na(SessionsJoined$`Scheduled End Time.y`), SessionsJoined$`Scheduled End Time.x`, SessionsJoined$`Scheduled End Time.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Scheduled End Time`=`Scheduled End Time.y`)
+
+SessionsJoined$`First Name.y` <- ifelse(!is.na(SessionsJoined$`First Name.x`) & is.na(SessionsJoined$`First Name.y`), SessionsJoined$`First Name.x`, SessionsJoined$`First Name.y`)
+SessionsJoined <- SessionsJoined %>% rename(`First Name`=`First Name.y`)
+
+SessionsJoined$`Last Name.y` <- ifelse(!is.na(SessionsJoined$`Last Name.x`) & is.na(SessionsJoined$`Last Name.y`), SessionsJoined$`Last Name.x`, SessionsJoined$`Last Name.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Last Name`=`Last Name.y`)
+
+SessionsJoined$`Group.y` <- ifelse(!is.na(SessionsJoined$`Group.x`) & is.na(SessionsJoined$`Group.y`), SessionsJoined$`Group.x`, SessionsJoined$`Group.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Group`=`Group.y`)
+
+SessionsJoined$`Primary Major.x` <- ifelse(!is.na(SessionsJoined$`Primary Major.y`) & is.na(SessionsJoined$`Primary Major.x`), SessionsJoined$`Primary Major.y`, SessionsJoined$`Primary Major.x`)
+SessionsJoined <- SessionsJoined %>% rename(`Primary Major`=`Primary Major.x`)
+
+SessionsJoined$`Appointment Type.y` <- ifelse(!is.na(SessionsJoined$`Appointment Type.x`) & is.na(SessionsJoined$`Appointment Type.y`), SessionsJoined$`Appointment Type.x`, SessionsJoined$`Appointment Type.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Appointment Type`=`Appointment Type.y`)
+
+SessionsJoined$`Academic Year.y` <- ifelse(!is.na(SessionsJoined$`Academic Year.x`) & is.na(SessionsJoined$`Academic Year.y`), SessionsJoined$`Academic Year.x`, SessionsJoined$`Academic Year.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Academic Year`=`Academic Year.y`)
+
+SessionsJoined$`Location.y` <- ifelse(!is.na(SessionsJoined$`Location.x`) & is.na(SessionsJoined$`Location.y`), SessionsJoined$`Location.x`, SessionsJoined$`Location.y`)
+SessionsJoined <- SessionsJoined %>% rename(`Location`=`Location.y`)
+
+SessionsJoined$`Appointment Status`<- ifelse(!is.na(SessionsJoined$Status) & is.na(SessionsJoined$`Appointment Status`), SessionsJoined$Status, SessionsJoined$`Appointment Status`)
+
+StatusOnly <- SessionsJoined %>% select(`Appointment Status`)
+
+##delete extra columns
+SessionsJoined[c("Course Name.x", "Course Section.x", "Day.x", "Scheduled Duration.x", "Email.y", "Scheduled End Time.x", "First Name.x", "Last Name.x", "Group.x", "Primary Major.y", "Appointment Type.x", "Academic Year.x", "Location.x","Canceled By.y","Canceled By.x")] <- list(NULL)
+
+AptStatusSessions <- SessionsJoined %>% select(`Appointment Status`)
+
+CombosTimesDuration <- unique(SessionsJoined[c("Scheduled Start Time","Scheduled End Time", "Scheduled Duration")])
+
+
+SessionsJoined <- filter(SessionsJoined, !(`ID`==433389552 & `Date`=="2023-11-12" & `Created By`=="jtvaught@syr.edu"))
+
+SessionLocation <- SessionsJoined %>% select(`ID`,`Date`,`Scheduled Start Time`,`Host`) %>% group_by(`ID`,`Date`,`Scheduled Start Time`,`Host`) %>% summarise(n=n())
+SessionDateTime <- SessionsJoined %>% select(`ID`,`Date`,`Scheduled Start Time`) %>% group_by(`ID`,`Date`,`Scheduled Start Time`) %>% summarise(n=n())
+
+
+SessionDateTime <- SessionDateTime %>% arrange(desc(n), ID)
+
+##adjust name
+SessionsJoined$Host <- ifelse(SessionsJoined$Host=="Shubham pandey","Shubham Pandey",SessionsJoined$Host)
+
+##adjust covid sessions as not noshow
+SessionsJoined$`Appointment Status` <- ifelse((SessionsJoined$Notes=="Quaratined for COVID-19." | SessionsJoined$Notes=="Niko still in COVID quarantine." | SessionsJoined$Notes=="Lizzie has covid and could not attend our appt."),"cancelled",SessionsJoined$`Appointment Status`)
+SessionsJoined$`Report Status` <- ifelse((SessionsJoined$Notes=="Quaratined for COVID-19." | SessionsJoined$Notes=="Niko still in COVID quarantine." | SessionsJoined$Notes=="Lizzie has covid and could not attend our appt."),"cancelled",SessionsJoined$`Report Status`)
+SessionsJoined$`Excused` <- ifelse((SessionsJoined$Notes=="Quaratined for COVID-19." | SessionsJoined$Notes=="Niko still in COVID quarantine." | SessionsJoined$Notes=="Lizzie has covid and could not attend our appt."),"Yes",SessionsJoined$`Excused`)
+SessionsJoined$`Cancel Reason` <- ifelse((SessionsJoined$Notes=="Quaratined for COVID-19." | SessionsJoined$Notes=="Niko still in COVID quarantine." | SessionsJoined$Notes=="Lizzie has covid and could not attend our appt."),"COVID-19",SessionsJoined$`Cancel Reason`)
+
+#resolve inconsistent appointment and report statuses
+SessionsJoined$`Appointment Status` <- ifelse((SessionsJoined$`Appointment Status`=="scheduled" & SessionsJoined$`Report Status`=="cancelled"),"cancelled",SessionsJoined$`Appointment Status`)
+SessionsJoined$`Excused` <- ifelse((SessionsJoined$`Appointment Status`=="scheduled" & SessionsJoined$`Report Status`=="cancelled"),"Yes",SessionsJoined$`Excused`)
+
+SessionsJoined$`Appointment Status` <- ifelse((SessionsJoined$`Appointment Status`=="scheduled" & SessionsJoined$`Report Status`=="completed"),"completed",SessionsJoined$`Appointment Status`)
+SessionsJoined$`Excused` <- ifelse((SessionsJoined$`Appointment Status`=="scheduled" & SessionsJoined$`Report Status`=="completed"),"No Excuse Needed",SessionsJoined$`Excused`)
+
+SessionsJoined$`Appointment Status` <- ifelse((SessionsJoined$`Appointment Status`=="completed" & SessionsJoined$`Report Status`=="cancelled"),"cancelled",SessionsJoined$`Appointment Status`)
+SessionsJoined$`Excused` <- ifelse((SessionsJoined$`Appointment Status`=="completed" & SessionsJoined$`Report Status`=="cancelled"),"Yes",SessionsJoined$`Excused`)
+
+SessionsJoined <- SessionsJoined %>% rename("Apt Status"=Status)
+
+write_csv(SessionsJoined, "SessionsJoined.csv")
+```
+
+```{r}
+##get rid of sessions listed again by id, date, and time when necessary
+SessionsJoined <- subset(SessionsJoined, !((ID==281083242 & Date=="2024-03-21" & `Scheduled Start Time`=="07:30 PM" & `Apt Status`!="cancelled") | (ID==281083242 & Date=="2024-04-07") | (ID==281083242 & Date=="2024-03-19") | (ID==200943560 & Date=="2023-10-11" & `Scheduled Start Time`=="04:00 PM" & `Apt Status`=="cancelled") | (ID==209814195 & Date=="2023-09-28" & `Scheduled Start Time`=="03:30 PM" & `Apt Status`=="cancelled") | (ID==209814195 & Date=="2023-12-13" & `Scheduled Start Time`=="02:00 PM" & `Apt Status`=="scheduled") | (ID==214610787 & Date=="2024-03-18" & `Scheduled Start Time`=="10:00 AM" & `Apt Status`=="cancelled") | (ID==235955442 & Date=="2023-12-05" & `Scheduled Start Time`=="06:30 PM" & `Apt Status`=="cancelled") | (ID==259669140 & Date=="2023-11-06" & `Scheduled Start Time`=="05:30 PM") | (ID==300059313 & Date=="2024-03-25" & `Scheduled Start Time`=="07:00 PM" & !is.na(`Apt Status`)) | (ID==300059313 & Date=="2024-04-01" & `Scheduled Start Time`=="07:00 PM" & !is.na(`Apt Status`)) | (ID==314747565 & Date=="2024-02-20" & `Scheduled Start Time`=="07:00 PM" & `Apt Status`=="cancelled") | (ID==316712629 & Date=="2024-02-21" & `Scheduled Start Time`=="06:00 PM" & `Apt Status`=="cancelled") | (ID==331779345 & Date=="2023-10-19" & `Scheduled Start Time`=="08:00 PM" & `Apt Status`=="cancelled") | (ID==331779345 & Date=="2023-10-24" & `Scheduled Start Time`=="08:00 PM" & `Apt Status`=="cancelled") | (ID==337876541 & Date=="2023-10-11" & `Scheduled Start Time`=="04:00 PM" & `Host`=="Sara Park") | (ID==359639320 & Date=="2023-11-27" & `Scheduled Start Time`=="07:00 PM" & `Apt Status`=="cancelled") | (ID==359639320 & Date=="2023-12-11" & `Scheduled Start Time`=="07:00 PM" & `Apt Status`=="cancelled") | (ID==387385826 & Date=="2024-01-29" & `Scheduled Start Time`=="12:00 PM" & `Apt Status`=="scheduled") | (ID==388233833 & Date=="2024-01-31" & `Scheduled Start Time`=="10:00 AM" & `Apt Status`=="cancelled") | (ID==402404656 & Date=="2024-02-16" & `Scheduled Start Time`=="11:00 AM" & `Apt Status`=="cancelled") | (ID==472483977 & Date=="2024-02-05" & `Scheduled Start Time`=="05:30 PM" & `Apt Status`=="cancelled") | (ID==505347828 & Date=="2024-02-19" & `Scheduled Start Time`=="06:00 PM" & `Apt Status`=="cancelled") | (ID==505347828 & Date=="2024-02-20" & `Scheduled Start Time`=="06:30 PM" & `Apt Status`=="cancelled") | (ID==525017130 & Date=="2023-09-26" & `Scheduled Start Time`=="03:30 PM" & `Apt Status`=="cancelled") | (ID==525086525 & Date=="2024-03-19" & `Scheduled Start Time`=="04:00 PM") | (ID==525086525 & Date=="2024-03-26" & `Scheduled Start Time`=="04:00 PM") | (ID==525086525 & Date=="2024-04-02" & `Scheduled Start Time`=="04:00 PM") | (ID==581430115 & Date=="2024-04-30" & `Scheduled Start Time`=="10:00 AM" & `Apt Status`=="cancelled") | (ID==585434729 & Date=="2024-03-05" & `Scheduled Start Time`=="03:30 PM") | (ID==585434729 & Date=="2024-03-22" & `Scheduled Start Time`=="02:00 PM") | (ID==585434729 & Date=="2024-03-29" & `Scheduled Start Time`=="02:00 PM") | (ID==585434729 & Date=="2024-04-05" & `Scheduled Start Time`=="02:00 PM") | (ID==585586827 & Date=="2023-10-26" & `Scheduled Start Time`=="07:00 PM" & `Apt Status`=="cancelled") | (ID==653917599 & Date=="2024-02-22" & `Scheduled Start Time`=="06:30 PM" & `Apt Status`=="cancelled") | (ID==662843431 & Date=="2023-11-06" & `Scheduled Start Time`=="06:00 PM" & `Apt Status`=="completed") | (ID==681760455 & Date=="2023-10-02" & `Scheduled Start Time`=="11:00 AM" & `Apt Status`=="scheduled") | (ID==681760455 & Date=="2024-02-23" & `Scheduled Start Time`=="12:00 PM" & is.na(`Apt Status`)) | (ID==681760455 & Date=="2024-03-01" & `Scheduled Start Time`=="12:00 PM" & `Apt Status`=="cancelled") | (ID==683490229 & Date=="2024-02-07" & `Scheduled Start Time`=="02:00 PM" & `Apt Status`=="cancelled") | (ID==685001296 & Date=="2023-11-05" & `Scheduled Start Time`=="05:00 PM" & `Apt Status`=="completed") | (ID==705295859 & Date=="2023-09-20" & `Scheduled Start Time`=="10:00 AM" & `Apt Status`=="cancelled")))
+
+SessionsJoined <- subset(SessionsJoined, !((ID==705295859 & Date=="2023-09-25" & `Scheduled Start Time`=="11:00 AM" & `Apt Status`=="scheduled") | (ID==705295859 & Date=="2023-12-06" & `Scheduled Start Time`=="10:00 AM" & `Apt Status`=="cancelled") | (ID==755625801 & Date=="2024-03-25" & `Scheduled Start Time`=="08:00 PM") | (ID==	
+803358389 & Date=="2023-11-12" & `Scheduled Start Time`=="03:00 PM" & `Apt Status`=="cancelled") | (ID==	
+803358389 & Date=="2023-12-03" & `Scheduled Start Time`=="03:00 PM" & `Apt Status`=="cancelled") | (ID==	
+803358389 & Date=="2024-02-06" & `Scheduled Start Time`=="05:30 PM" & `Apt Status`=="cancelled") | (ID==	
+806981543 & Date=="2024-02-08" & `Scheduled Start Time`=="07:00 PM" & `Apt Status`=="cancelled") | (ID==	
+838893767 & Date=="2023-09-19" & `Scheduled Start Time`=="08:00 PM" & `Apt Status`=="cancelled") | (ID==	
+927794038 & Date=="2024-02-05" & `Scheduled Start Time`=="02:00 PM" & `Apt Status`=="cancelled") | (ID==	
+933678123 & Date=="2023-10-17" & `Scheduled Start Time`=="05:00 PM" & `Apt Status`=="cancelled") | (ID==	
+950843852 & Date=="2024-01-28" & `Scheduled Start Time`=="05:00 PM" & `Apt Status`=="cancelled") | (ID==	
+950843852 & Date=="2024-02-23" & `Scheduled Start Time`=="10:00 AM" & is.na(`Apt Status`)) | (ID==	
+985511973 & Date=="2023-11-06" & `Scheduled Start Time`=="07:00 PM" & `Apt Status`=="cancelled")   ))
+```
+
+
+
+
+
+
+```{r}
+##get sessions by course level
+SessionsCourseLevel <- SessionsJoined %>% mutate(`Course Level`= substr(SessionsJoined$`Course Name`,4,4) %>% as.numeric() * 100) %>% select(`Course Name`,`Course Level`,`Attended`,`Appointment Status`)
+
+SessionsCourseLevelTotals <- SessionsCourseLevel %>% group_by(`Course Level`) %>% summarise(n=n()) 
+SessionsCourseLevelTotals <- SessionsCourseLevelTotals %>% mutate(`Course Level Pct` = n / sum(SessionsCourseLevelTotals$n) * 100)
+
+SessionsCourseLevelAdjusted <- subset(SessionsCourseLevel, `Attended`==1)
+SessionsCourseLevelAdjustedTotals <- SessionsCourseLevelAdjusted %>% group_by(`Course Level`) %>% summarise(n=n()) 
+SessionsCourseLevelAdjustedTotals <- SessionsCourseLevelAdjustedTotals %>% mutate(`Course Level Pct` = n / sum(SessionsCourseLevelAdjustedTotals$n) * 100)
+
+write_csv(SessionsCourseLevelAdjustedTotals, "Session Course Level Dist.csv")
+```
+
+```{r}
+##combine 500+ into 1 category
+SessionsCourseLevel <- SessionsCourseLevel %>% mutate(`Course Level Trunc`=`Course Level`)
+SessionsCourseLevel$`Course Level Trunc` <- ifelse(SessionsCourseLevel$`Course Level Trunc`>=500,500,SessionsCourseLevel$`Course Level Trunc`)
+
+SessionsCourseLevelTruncTotals <- SessionsCourseLevel %>% group_by(`Course Level Trunc`) %>% summarise(n=n()) 
+SessionsCourseLevelTruncTotals <- SessionsCourseLevelTruncTotals %>% mutate(`Course Level Pct` = n / sum(SessionsCourseLevelTruncTotals$n) * 100)
+
+SessionsCourseLevelTruncAdjusted <- subset(SessionsCourseLevel, `Attended`==1)
+SessionsCourseLevelTruncAdjustedTotals <- SessionsCourseLevelTruncAdjusted %>% group_by(`Course Level Trunc`) %>% summarise(n=n()) 
+SessionsCourseLevelTruncAdjustedTotals <- SessionsCourseLevelTruncAdjustedTotals %>% mutate(`Course Level Pct` = n / sum(SessionsCourseLevelTruncAdjustedTotals$n) * 100)
+
+write_csv(SessionsCourseLevelTruncAdjustedTotals, "Session Course Level Trunc Dist.csv")
+```
+
+
+```{r}
+##attendance by day of week - going forward attendance only accounts for known attendance sessions
+SessionsDays <- SessionsJoined %>% subset(`Appointment Status`!="scheduled") %>% select(`Day`,`Appointment Status`,`Attended`)
+
+SessionsDays$Attended <- ifelse(is.na(SessionsDays$Attended),0.5,SessionsDays$Attended)
+SessionsDaysTotals <- SessionsDays %>% group_by(`Day`) %>% summarise(n=n(), `Did Attend`=sum(`Attended`==1), `Did Not Attend`=sum(`Attended`==0), `Known Attendance`=`Did Attend`+`Did Not Attend`, `Did Attend pct`=(`Did Attend`/(`Did Attend`+`Did Not Attend`))*100, `Did Cancel`=sum(`Appointment Status`=="cancelled"), `Did Not Cancel`=sum(`Appointment Status`!="cancelled"), `Not Cancel pct`=(`Did Not Cancel`/n)*100)
+
+
+
+write_csv(SessionsDaysTotals, "Days of Week Session Attendance & Cancellation.csv")
+```
+
+```{r}
+##attendance by time of day
+SessionsTimeOfDay <- SessionsJoined %>% subset(`Appointment Status`!="scheduled") %>% mutate(`Time of Day`=ifelse(grepl("AM",`Scheduled Start Time`),"Morning", ifelse(substr(`Scheduled Start Time`,1,5)<"05:30" | substr(`Scheduled Start Time`,1,5)>="12:00", "Afternoon", "Evening")) ) %>% select(`Scheduled Start Time`,`Appointment Status`,`Attended`,`Time of Day`)
+SessionsTimeOfDaySorted <- SessionsTimeOfDay %>% arrange(`Time of Day`,`Scheduled Start Time`)
+
+SessionsTimeOfDay$Attended <- ifelse(is.na(SessionsTimeOfDay$Attended),0.5,SessionsTimeOfDay$Attended)
+
+
+SessionsTimeOfDayTotals <- SessionsTimeOfDay %>% group_by(`Time of Day`) %>% summarise(n=n(), `Did Attend`=sum(`Attended`==1), `Did Not Attend`=sum(`Attended`==0), `Known Attendance`=`Did Attend`+`Did Not Attend`, `Did Attend pct`=(`Did Attend`/(`Did Attend`+`Did Not Attend`))*100, `Did Attend pct`=(`Did Attend`/n)*100, `Did Cancel`=sum(`Appointment Status`=="cancelled"), `Did Not Cancel`=sum(`Appointment Status`!="cancelled"), `Not Cancel pct`=(`Did Not Cancel`/n)*100)
+
+AvgAtt <- sum(SessionsTimeOfDayTotals$`Did Attend pct`*SessionsTimeOfDayTotals$`Known Attendance`)/sum(SessionsTimeOfDayTotals$`Known Attendance`)
+AvgNotCancel <- sum(SessionsTimeOfDayTotals$`Not Cancel pct`*SessionsTimeOfDayTotals$`n`)/sum(SessionsTimeOfDayTotals$`n`)
+
+write_csv(SessionsTimeOfDayTotals, "Time Of Day Session Attendance & Cancellation.csv")
+```
+
+```{r}
+##attendance by month
+SessionsMonths <- SessionsJoined %>% subset(`Appointment Status`!="scheduled") %>% mutate(`Month`=substr(`Date`,6,7)) %>% select(`Date`,`Attended`,`Appointment Status`,`Month`)
+
+SessionsMonths$Attended <- ifelse(is.na(SessionsMonths$Attended),0.5,SessionsMonths$Attended)
+
+SessionsMonthsTotals <- SessionsMonths %>% group_by(`Month`) %>% summarise(n=n(), `Did Attend`=sum(`Attended`==1), `Did Not Attend`=sum(`Attended`==0), `Known Attendance`=`Did Attend`+`Did Not Attend`, `Did Attend pct`=(`Did Attend`/(`Did Attend`+`Did Not Attend`))*100, `Did Attend pct`=(`Did Attend`/n)*100, `Did Cancel`=sum(`Appointment Status`=="cancelled"), `Did Not Cancel`=sum(`Appointment Status`!="cancelled"), `Not Cancel pct`=(`Did Not Cancel`/n)*100)
+
+write_csv(SessionsMonthsTotals, "Monthly Session Attendance & Cancellation.csv")
+```
+
+
+
+
+
+
+
+```{r}
+TutorsTidy <- read_csv("TutorsTidy.csv")
+```
+
+```{r}
+##fix tutor names for joining
+TutorsTidy$`First Name` <- ifelse(grepl("\"",TutorsTidy$`First Name`),sub(' .*','',TutorsTidy$`First Name`),TutorsTidy$`First Name`)
+TutorsTidy$`First Name` <- ifelse(TutorsTidy$`First Name`=="Jessica", "Jessie", TutorsTidy$`First Name`)
+TutorsTidy$`First Name` <- ifelse(TutorsTidy$`First Name`=="Tomas", "Tomás", TutorsTidy$`First Name`)
+TutorsTidy$`First Name` <- ifelse(TutorsTidy$`First Name`=="Anthiya", "Anthiya Alfred", TutorsTidy$`First Name`)
+TutorsTidy$`First Name` <- ifelse(TutorsTidy$`First Name`=="Sophia", "Sophia Maria", TutorsTidy$`First Name`)
+TutorsTidy <- TutorsTidy %>% mutate(`Tutor`= paste(`First Name`, `Last Name`))
+
+
+SessionsJoined_Tutor <- SessionsJoined %>% left_join(TutorsTidy, by = c("Host"="Tutor"))
+SessionsJoined_Tutor <- SessionsJoined_Tutor %>% mutate(`Tutor Name`= paste(`First Name.y`, `Last Name.y`))
+
+##check for consistency
+SessionsJoined_TutorWithHost <- SessionsJoined_Tutor %>% select(`Host`,`Tutor Name`)
+SessionsJoined_TutorWithHost <- SessionsJoined_TutorWithHost %>% mutate(IsConsistent=ifelse(`Host`==`Tutor Name`,1,0))
+SessionsJoined_TutorWithHostSorted <- SessionsJoined_TutorWithHost %>% arrange(`IsConsistent`,`Host`)
+
+ComboStatusReport <- unique(SessionsJoined_Tutor[c("Appointment Status","Report Status")])
+
+##check for inconsistent appointment and report statuses
+ScheduledCancelled <- subset(SessionsJoined_Tutor, `Appointment Status`=="scheduled" & `Report Status`=="cancelled")
+ScheduledCompleted <- subset(SessionsJoined_Tutor, `Appointment Status`=="scheduled" & `Report Status`=="completed")
+CompletedCancelled <- subset(SessionsJoined_Tutor, `Appointment Status`=="completed" & `Report Status`=="cancelled")
+CompletedOpen <- subset(SessionsJoined_Tutor, `Appointment Status`=="completed" & `Report Status`=="open")
+CompletedMissed <- subset(SessionsJoined_Tutor, `Appointment Status`=="completed" & `Report Status`=="missed")
+
+SessionsJoined_Tutor$`Appointment Status`<- ifelse(!is.na(SessionsJoined_Tutor$`Apt Status`) & is.na(SessionsJoined_Tutor$`Appointment Status`), SessionsJoined_Tutor$`Apt Status`, SessionsJoined_Tutor$`Appointment Status`)
+
+AptStatusTutor <- SessionsJoined_Tutor %>% select(`Appointment Status`)
+
+write_csv(SessionsJoined_Tutor, "SessionsJoinedTutor.csv")
+```
+
+```{r}
+##reports filed by various tutor characteristics
+#SessionsJoined_Tutor$`Report Filed` <- ifelse(is.na(SessionsJoined_Tutor$`Report Filed`),"No",SessionsJoined_Tutor$`Report Filed`)
+TutorReportInfo <- subset(SessionsJoined_Tutor, !is.na(SessionsJoined_Tutor$`Report Filed`))
+TutorReports <- TutorReportInfo %>% select(`Host`, `Report Filed`, `Standing`) %>% group_by(`Host`) %>% summarise(n=n(), `Reports Filed`=sum(`Report Filed`=="Yes"), `Reports Not Filed`=sum(`Report Filed`=="No"), `Pct Filed`=(`Reports Filed`/n) * 100)
+
+write_csv(TutorReports, "Reports Filed by Tutors.csv")
+
+TutorReportInfo <- TutorReportInfo %>% mutate(`Start Season`=paste(`Start Year`, `Start Semester`))
+
+TutorStandingReports <- TutorReportInfo %>% select(`Host`, `Report Filed`, `Standing`) %>% group_by(`Standing`) %>% summarise(n=n(), `Reports Filed`=sum(`Report Filed`=="Yes"), `Reports Not Filed`=sum(`Report Filed`=="No"), `Pct Filed`=(`Reports Filed`/n) * 100)
+
+write_csv(TutorStandingReports, "Reports Filed by Tutor Standing.csv")
+
+TutorReportsIASplit <- TutorReportInfo %>% select(`Host`, `Report Filed`, `Instructional Assistant Dummy`) %>% group_by(`Instructional Assistant Dummy`) %>% summarise(n=n(), `Reports Filed`=sum(`Report Filed`=="Yes"), `Reports Not Filed`=sum(`Report Filed`=="No"), `Pct Filed`=(`Reports Filed`/n) * 100)
+
+write_csv(TutorReportsIASplit, "Reports Filed by Tutor IA Status.csv")
+
+TutorStartTermReports <- TutorReportInfo %>% select(`Host`, `Report Filed`, `Start Season`) %>% group_by(`Start Season`) %>% summarise(n=n(), `Reports Filed`=sum(`Report Filed`=="Yes"), `Reports Not Filed`=sum(`Report Filed`=="No"), `Pct Filed`=(`Reports Filed`/n) * 100)
+
+write_csv(TutorStartTermReports, "Reports Filed by Tutor Start Season.csv")
+
+TutorReportInfo$Status <- ifelse(TutorReportInfo$Status=="Actice", "Active", TutorReportInfo$Status)
+TutorStatusReports <- TutorReportInfo %>% select(`Host`, `Report Filed`, `Status`) %>% group_by(`Status`) %>% summarise(n=n(), `Reports Filed`=sum(`Report Filed`=="Yes"), `Reports Not Filed`=sum(`Report Filed`=="No"), `Pct Filed`=(`Reports Filed`/n) * 100)
+TutorReportInfo$Status <- ifelse(TutorReportInfo$Status=="Actice", "Active", TutorReportInfo$Status)
+
+write_csv(TutorStatusReports, "Reports Filed by Tutor Status.csv")
+```
+
+```{r}
+##IA vs non IA GPA
+TutorIAs <- subset(SessionsJoined_Tutor, `Instructional Assistant Dummy`==1)
+TutorIAsGPA <- subset(TutorIAs, `GPA`!="n/a")
+TutorIAsGPA$GPA <- as.numeric(TutorIAsGPA$GPA)
+
+AverageIAGPA <- mean(TutorIAsGPA$GPA)
+
+
+TutorNotIAs <- subset(SessionsJoined_Tutor, `Instructional Assistant Dummy`==0)
+TutorNotIAsGPA <- subset(TutorNotIAs, `GPA`!="n/a")
+TutorNotIAsGPA$GPA <- as.numeric(TutorNotIAsGPA$GPA)
+
+AverageNotIAGPA <- mean(TutorNotIAsGPA$GPA)
+
+TutorIAs <- TutorIAs %>% mutate(`Start Season`=paste(`Start Year`, `Start Semester`))
+
+##start term and standing (professional or UG student or G student) distribution for IAs
+TutorIAsStart <- TutorIAs %>% select(`Host`, `Start Season`) %>% group_by(`Host`) %>% summarise(`Start Season`=`Start Season`)
+TutorIAsStart <- TutorIAsStart[!duplicated(TutorIAsStart), ]
+TutorIAsStartDist <- TutorIAsStart %>% group_by(`Start Season`) %>% summarise(n=n())
+
+##Include dist tables directly in presentation
+
+TutorIAsStanding <- TutorIAs %>% select(`Host`, `Standing`) %>% group_by(`Host`) %>% summarise(`Standing`=`Standing`)
+TutorIAsStanding <- TutorIAsStanding[!duplicated(TutorIAsStanding), ]
+TutorIAsStandingDist <- TutorIAsStanding %>% group_by(`Standing`) %>% summarise(n=n())
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+#Grades1 <- read_csv("Grades.csv")
+Enrollment <- read_csv("enrollment.csv")
+GradesTidy <- read_csv("GradesTidy.csv")
+
+#GradesTidy <- GradesTidy %>%
+  #select(SUID, Term, `Session Sh Desc`, Subject, `Catalog Number`, Section, Title, `Grade Official`)
+
+#Create class code column
+GradesTidy <- GradesTidy %>%
+  mutate(Class_Code = paste0(Subject, `Catalog Number`))
+
+
+```
+
+```{r}
+##Clean sports team names and get credits taken, passed, and attempted overall + check for consistency 
+Full_Grades <- GradesTidy %>%
+  full_join(Enrollment, by = c("SUID" = "SUID", "Term" = "Term", "Class_Code" = "Class Code*"))
+
+Full_Grades <- Full_Grades %>%
+  rename("Units Taken in Semester" = "Units Taken Progress")
+
+Full_Grades <- Full_Grades %>%
+  rename("Units Passed in Semester" = "Units Passed Progress")
+
+Full_Grades <- Full_Grades %>%
+  rename("Credits Attempted" = "max(`Credits Attempted`)")
+
+Full_Grades$Sport.y <- ifelse(!is.na(Full_Grades$Sport.x) & !is.na(Full_Grades$Sport.y), Full_Grades$Sport.x, Full_Grades$Sport.y)
+Full_Grades$Sport.x <- ifelse(is.na(Full_Grades$Sport.x), Full_Grades$Sport.y, Full_Grades$Sport.x)
+Full_Grades$Sport.y <- ifelse(is.na(Full_Grades$Sport.y), Full_Grades$Sport.x, Full_Grades$Sport.y)
+
+Full_Grades$Sport.x <- gsub("Men's Football", "Football", Full_Grades$Sport.x)
+Full_Grades$Sport.y <- gsub("Men's Football", "Football", Full_Grades$Sport.y)
+
+Full_Grades$Sport.x <- gsub("Women's Field Hockey", "Field Hockey", Full_Grades$Sport.x)
+Full_Grades$Sport.y <- gsub("Women's Field Hockey", "Field Hockey", Full_Grades$Sport.y)
+
+ComboJoinSportSection <- unique(Full_Grades[c("Sport.x","Sport.y")])
+ComboJoinSportSection <- ComboJoinSportSection %>% mutate(IsConsistent=ifelse(`Sport.x`==`Sport.y`,1,0))
+
+ComboJoinCourseSection <- unique(Full_Grades[c("Acad Prog Sh Desc","College")])
+ComboJoinCourseSection <- ComboJoinCourseSection %>% mutate(IsConsistent=ifelse(`Acad Prog Sh Desc`==`College`,1,0))
+
+Full_Grades$`Units Taken` <- ifelse(is.na(Full_Grades$`Units Taken`), Full_Grades$`Credits Attempted`, Full_Grades$`Units Taken`)
+Full_Grades$`Credits Attempted` <- ifelse(is.na(Full_Grades$`Credits Attempted`), Full_Grades$`Units Taken`, Full_Grades$`Credits Attempted`)
+
+##Sort
+Unit_Check <- Full_Grades %>%
+  arrange(desc(`Units Taken`), desc(`Credits Attempted`)) %>%
+  select(SUID, Class_Code, `Credits Attempted`, `Units Taken`, `Credits Attempted`)
+
+ComboJoinCredits <- unique(Full_Grades[c("Credits Attempted","Units Taken")])
+ComboJoinCredits <- ComboJoinCredits %>% mutate(IsConsistent=ifelse(`Units Taken`==`Credits Attempted`,1,0))
+
+
+  
+```
+
+
+
+
+
+
+
+```{r}
+Professor <- read_csv("professor.csv")
+Grades_Enrollment <- read_csv("GradesEnrollment.csv")
+```
+
+
+```{r}
+##Join grade check data with prof info
+Grades_Enrollment_StudentInfo <- Grades_Enrollment %>%
+  select(SUID, Class_Code, `Ethnic Group Code Desc All`, `Gender Sh Desc`, `Acad Prog Sh Desc`, Sport.x, Term, `Acad Level Begin Term Desc`, `Units Taken in Semester`, `Units Passed in Semester`, `Total Cumulative`,`Curr Gpa`, `Cum Gpa`, `Units Taken`, `Grade Official`, College)
+
+GradeCheck <- Professor %>%
+  inner_join(Grades_Enrollment_StudentInfo, by = c("SUID" = "SUID", "Course" = "Class_Code"))
+
+##Convert final grades and grade check grades from letter to GPA
+GradeCheck$Grade_Numerical <- ifelse(GradeCheck$Grade == 'A', 4.0, ifelse(GradeCheck$Grade == 'A-', 3.7, ifelse(GradeCheck$Grade == 'B+', 3.3, ifelse(GradeCheck$Grade == 'B', 3.0, ifelse(GradeCheck$Grade == 'B-', 2.7, ifelse(GradeCheck$Grade == 'C+', 2.3, ifelse(GradeCheck$Grade == 'C', 2.0, ifelse(GradeCheck$Grade == 'C-', 1.7, ifelse(GradeCheck$Grade == 'D+', 1.3, ifelse(GradeCheck$Grade == 'D', 1.0, ifelse(GradeCheck$Grade == 'D-', 0.7, ifelse(GradeCheck$Grade == 'F', 0.0, NA))))))))))))
+
+GradeCheck$Grade_Official_Numerical <- ifelse(GradeCheck$`Grade Official` == 'A', 4.0, ifelse(GradeCheck$`Grade Official` == 'A-', 3.7, ifelse(GradeCheck$`Grade Official` == 'B+', 3.3, ifelse(GradeCheck$`Grade Official` == 'B', 3.0, ifelse(GradeCheck$`Grade Official` == 'B-', 2.7, ifelse(GradeCheck$`Grade Official` == 'C+', 2.3, ifelse(GradeCheck$`Grade Official` == 'C', 2.0, ifelse(GradeCheck$`Grade Official` == 'C-', 1.7, ifelse(GradeCheck$`Grade Official` == 'D+', 1.3, ifelse(GradeCheck$`Grade Official` == 'D', 1.0, ifelse(GradeCheck$`Grade Official` == 'D-', 0.7, ifelse(GradeCheck$Grade == 'F', 0.0, NA))))))))))))
+
+##Get rid of extra column
+GradeCheck[c("Sport")] <- list(NULL)
+GradeCheck <- GradeCheck %>%
+  rename("Sport" = "Sport.x")
+
+##Get difference between final grade and grade check
+GradeCheck <- GradeCheck %>%
+  mutate(GradeDiff = Grade_Official_Numerical - Grade_Numerical)
+
+```
+
+
+```{r}
+##Get rid of blanks
+GradeCheck2 <- GradeCheck %>%
+  subset(!is.na(Grade_Official_Numerical) & !is.na(Grade_Numerical))
+
+##Get grade check grades, final grades, differential, and at risk status by student, course, and term
+GradeCheck2 <- GradeCheck2 %>%
+  group_by(SUID, Course, Term) %>%
+  summarize(Grade_Numerical = Grade_Numerical, Grade_Official_Numerical = Grade_Official_Numerical, GradeDiff = GradeDiff, AtRiskDummy = AtRiskDummy) %>%
+  mutate(CheckCount = n())
+
+table(GradeCheck2$CheckCount)
+
+##Get students with at least 3 grade checks
+NumberofChecks <- GradeCheck2 %>%
+  subset(CheckCount > 2)
+
+##Students at risk
+AtRisk <- GradeCheck2 %>%
+  subset(AtRiskDummy == 1)
+
+##Only include final grades from 2.3-3.7
+LowerAchievers <- GradeCheck2 %>%
+  subset(!Grade_Official_Numerical >= 3.7 & !Grade_Official_Numerical <= 2.3)
+```
+
+```{r}
+##grade check models 
+GradeCheckMod <- lm(GradeDiff ~ Grade_Numerical + AtRiskDummy + CheckCount, data = GradeCheck2)
+summary(GradeCheckMod)
+
+car::vif(GradeCheckMod)
+bptest(GradeCheckMod)
+bptest(GradeCheckMod, ~ Grade_Numerical*AtRiskDummy*CheckCount + I(Grade_Numerical^2) + I(AtRiskDummy^2) + I(CheckCount^2), data = GradeCheck2)
+
+coeftest(GradeCheckMod, vcov=hccm)
+
+
+
+CheckCountMod <- lm(GradeDiff ~ Grade_Numerical + AtRiskDummy + CheckCount, data = NumberofChecks)
+summary(CheckCountMod)
+
+car::vif(CheckCountMod)
+bptest(CheckCountMod)
+bptest(CheckCountMod, ~ Grade_Numerical*AtRiskDummy*CheckCount + I(Grade_Numerical^2) + I(AtRiskDummy^2) + I(CheckCount^2), data = NumberofChecks)
+
+coeftest(CheckCountMod, vcov=hccm)
+
+
+LowAchieversMod <- lm(GradeDiff ~ Grade_Numerical + AtRiskDummy + CheckCount, data = LowerAchievers)
+summary(LowAchieversMod)
+
+car::vif(LowAchieversMod)
+bptest(LowAchieversMod)
+bptest(LowAchieversMod, ~ Grade_Numerical*AtRiskDummy*CheckCount + I(Grade_Numerical^2) + I(AtRiskDummy^2) + I(CheckCount^2), data = LowerAchievers)
+
+coeftest(LowAchieversMod, vcov=hccm)
+
+
+sum(GradeCheck2$Grade_Official_Numerical >= 3.7)
+
+sum(GradeCheck2$Grade_Official_Numerical <= 2.3)
+
+```
+
+```{r}
+SportSeason <- read_csv("SportSeason.csv")
+```
+
+```{r}
+##get start and end date for each sport season
+GCMerge <- merge(GradeCheck, SportSeason, by = "Sport")
+ 
+GCMerge$SD <- as.Date(GCMerge$SD, format = "%m/%d/%Y")
+GCMerge$ED <- as.Date(GCMerge$ED, format = "%m/%d/%Y")
+GCMerge$`Submitted On` <- as.Date(GCMerge$`Submitted On`, format = "%m/%d/%Y")
+ 
+GCMerge$InSeasonDummy <- as.integer(GCMerge$`Submitted On` >= GCMerge$SD & GCMerge$`Submitted On` <= GCMerge$ED)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+Grades_Enrollment <- read_csv("GradesEnrollment.csv")
+Grades_Enrollment <- Grades_Enrollment %>% rename("Sport"="Sport.x")
+Grades_Enrollment[c("Sport.y")] <- list(NULL)
+```
+
+
+```{r}
+##Join grades_enrollment info to main session data
+SessionsJoined_Tutor <- SessionsJoined_Tutor %>% mutate(`Term`=ifelse(`Date`<"2024-01-01","Fall 2023", "Spring 2024"))
+DateTerm <- SessionsJoined_Tutor %>% select(`Date`,`Term`)
+
+n_distinct(Grades_Enrollment$`SUID`, Grades_Enrollment$`Term`)
+
+Grades_Enrollment <- Grades_Enrollment %>% arrange(Grades_Enrollment$SUID, Grades_Enrollment$Term, Grades_Enrollment$College, Grades_Enrollment$`Major Desc`)
+
+Grades_Enrollment$`Major Desc` <- ifelse(Grades_Enrollment$`Major Desc`=="Management", "Management Major",Grades_Enrollment$`Major Desc`)
+
+Grades_EnrollmentTotals <- Grades_Enrollment %>% select(`SUID`,`Ethnic Group Code Desc All`,`Gender Sh Desc`,`Acad Prog Sh Desc`,`Sport`,`Curr Participant Ind Dummy`,`Participation Code Descr`,`Term`,`Acad Level Begin Term Desc`,`Units Taken in Semester`,`Units Passed in Semester`,`Total Cumulative`,`Curr Gpa`,`Cum Gpa`,`College`,`Major Desc`) %>% group_by(`SUID`,`Term`) %>% summarise(`SUID`=`SUID`,`Ethnic Group Code Desc All`=`Ethnic Group Code Desc All`,`Gender Sh Desc`=`Gender Sh Desc`,`Acad Prog Sh Desc`=`Acad Prog Sh Desc`,`Sport`=`Sport`,`Curr Participant Ind Dummy`=`Curr Participant Ind Dummy`,`Participation Code Descr`=`Participation Code Descr`,`Acad Level Begin Term Desc`=`Acad Level Begin Term Desc`, `Units Taken in Semester`=`Units Taken in Semester`,`Units Passed in Semester`=`Units Passed in Semester`,`Total Cumulative`=`Total Cumulative`,`Curr Gpa`=`Curr Gpa`,`Cum Gpa`=`Cum Gpa`,`College`=first(`College`),`Major Desc`=first(`Major Desc`))
+
+
+Grades_EnrollmentTotals <- Grades_EnrollmentTotals %>% filter(!(`SUID`==993550957 & `Cum Gpa`==0.000)) 
+
+Grades_EnrollmentTotals <- Grades_EnrollmentTotals[!duplicated(Grades_EnrollmentTotals), ]
+
+
+#table(Grades_EnrollmentTotals$SUID)
+
+SessionsJoinedTutor_GradesEnrollment <- SessionsJoined_Tutor %>% left_join(Grades_EnrollmentTotals, by = c("ID"="SUID","Term"="Term"))
+
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(grepl("Dual", SessionsJoinedTutor_GradesEnrollment$`Acad Prog Sh Desc`), SessionsJoinedTutor_GradesEnrollment$`Acad Prog Sh Desc`, SessionsJoinedTutor_GradesEnrollment$College)
+
+AptStatusThirdJoin <- SessionsJoinedTutor_GradesEnrollment %>% select(`Appointment Status`) 
+
+ComboJoinMajorDesc <- unique(SessionsJoinedTutor_GradesEnrollment[c("Primary Major","Major Desc")])
+ComboJoinMajorDesc <- ComboJoinMajorDesc %>% mutate(IsConsistent=ifelse(`Primary Major`==`Major Desc`,1,0))
+
+
+
+```
+
+
+
+
+
+
+```{r}
+##weekly hours in the classroom
+Grades_Enrollment <- Grades_Enrollment %>% mutate(`Hours Per Day In Classroom`=difftime(`first(\`End Time\`)`, `first(\`Start Time\`)`, units="hours"))
+Grades_Enrollment$`Hours Per Day In Classroom` <- sub(' hours','',Grades_Enrollment$`Hours Per Day In Classroom`) %>% as.numeric()
+Grades_Enrollment <- Grades_Enrollment %>% mutate(`Hours Per Week In Classroom`=`Hours Per Day In Classroom`*(`max(MondayDummy)`+`max(TuesdayDummy)`+`max(WednesdayDummy)`+`max(ThursdayDummy)`+`max(FridayDummy)`+ `max(SaturdayDummy)`+`max(SundayDummy)`))
+
+Grades_EnrollmentWeeklyHours <- subset(Grades_Enrollment, !is.na(`Hours Per Week In Classroom`) & `Hours Per Week In Classroom`>0)
+
+WeeklyClassroomHoursMajor <- Grades_EnrollmentWeeklyHours %>% group_by(`Major Desc`) %>% summarise(`Total Weekly Hours`=sum(`Hours Per Week In Classroom`))
+
+write_csv(WeeklyClassroomHoursMajor, "Weekly Hours in classroom.csv")
+
+WeeklyClassroomHoursSchool <- Grades_EnrollmentWeeklyHours %>% group_by(`College`) %>% summarise(`Total Weekly Hours`=sum(`Hours Per Week In Classroom`))
+
+write_csv(WeeklyClassroomHoursSchool, "Weekly Hours in classroom by college.csv")
+```
+
+```{r}
+##credit loads
+Grades_EnrollmentCredits <- subset(Grades_Enrollment, !is.na(`Credits Attempted`) & `Credits Attempted`>0)
+
+Grades_EnrollmentCreditsMajor <- Grades_EnrollmentCredits %>% group_by(`Term`,`Major Desc`) %>% summarise(`Credits`= sum(`Credits Attempted`))
+
+write_csv(Grades_EnrollmentCreditsMajor, "credit loads by major.csv")
+
+Grades_EnrollmentCreditsSchool <- Grades_EnrollmentCredits %>% group_by(`Term`,`College`) %>% summarise(`Credits`= sum(`Credits Attempted`))
+
+write_csv(Grades_EnrollmentCreditsSchool, "credit loads by college.csv")
+```
+
+
+
+
+
+
+```{r}
+##cancellation and noshow prep for models and models themselves
+table(SessionsJoined$Attended)
+table(SessionNotesTidy$Attended)
+table(SessionsJoined$`Status`)
+
+options(scipen=9)
+
+
+CombosNotesAttendance <- unique(SessionsJoinedTutor_GradesEnrollment[c("Attended","Appointment Status")])
+CombosMajors <- unique(SessionsJoinedTutor_GradesEnrollment[c("Primary Major","Major Desc")])
+
+SpringSessions <- subset(SessionsJoinedTutor_GradesEnrollment, `Term`=="Spring 2024")
+CombosSpringMajors <- unique(SpringSessions[c("Primary Major","Major Desc")])
+
+SessionsJoinedTutor_GradesEnrollment$`Major Desc` <- ifelse(is.na(SessionsJoinedTutor_GradesEnrollment$`Major Desc`),SessionsJoinedTutor_GradesEnrollment$`Primary Major`,SessionsJoinedTutor_GradesEnrollment$`Major Desc`)
+
+SessionMajorCancel <- SessionsJoinedTutor_GradesEnrollment %>% mutate(IsCancelled = ifelse(`Appointment Status`=="cancelled",1,0)) %>% select(`Appointment Status`, `Primary Major`,IsCancelled)
+#table(SessionMajorCancel$Status)
+SessionMajorCancelAdjusted <- subset(SessionMajorCancel, `Appointment Status`!="scheduled")
+
+
+PrimaryMajorCancelModel <- lm(IsCancelled ~ `Primary Major`, data=SessionMajorCancelAdjusted)
+summary(PrimaryMajorCancelModel)
+
+
+ComboAttendStatusReport <- unique(SessionsJoinedTutor_GradesEnrollment[c("Appointment Status","Report Status","Attended")])
+
+
+#table(SessionsJoined$Attended)
+SessionsWithAttendance <- subset(SessionsJoinedTutor_GradesEnrollment, !is.na(Attended))
+SessionsWithAttendanceAdjusted <- subset(SessionsWithAttendance, `Report Status`!="open")
+
+SessionAttendNoShowAdjustedMajor <- SessionsWithAttendanceAdjusted %>% mutate(IsNoShow = ifelse(`Appointment Status`=="completed" & `Report Status`=="missed",1,0)) %>% select(`Appointment Status`, `Primary Major`, `Report Status`, Attended, IsNoShow)
+
+#table(SessionAttendNoShowAdjustedMajor$Attended)
+
+MajorNoShowModel <- lm(IsNoShow ~ `Primary Major`, data=SessionAttendNoShowAdjustedMajor)
+summary(MajorNoShowModel)
+
+```
+
+
+```{r}
+##ensure colleges inputted properly before college cancel and noshow model
+CombosSchoolMajor <- unique(SessionsJoinedTutor_GradesEnrollment[c("College","Major Desc")])
+
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(SessionsJoinedTutor_GradesEnrollment$`Major Desc`=="Economics" & SessionsJoinedTutor_GradesEnrollment$College!="Dual MA/PC","Arts & Sciences",SessionsJoinedTutor_GradesEnrollment$College)
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(SessionsJoinedTutor_GradesEnrollment$`Major Desc`=="Comm & Rhetorical Studies","Visual & Performing Arts",SessionsJoinedTutor_GradesEnrollment$College)
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(SessionsJoinedTutor_GradesEnrollment$`Major Desc`=="Health and Exercise Science","Sport and Human Dynamics",SessionsJoinedTutor_GradesEnrollment$College)
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(SessionsJoinedTutor_GradesEnrollment$`Major Desc`=="Liberal Studies","Professional Studies",SessionsJoinedTutor_GradesEnrollment$College)
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(SessionsJoinedTutor_GradesEnrollment$`Major Desc`=="Supply Chain Management-U","Management",SessionsJoinedTutor_GradesEnrollment$College)
+SessionsJoinedTutor_GradesEnrollment$College <- ifelse(SessionsJoinedTutor_GradesEnrollment$`Major Desc`=="Undecided","Undecided",SessionsJoinedTutor_GradesEnrollment$College)
+
+
+SessionSchoolCancel <- SessionsJoinedTutor_GradesEnrollment %>% mutate(IsCancelled = ifelse(`Appointment Status`=="cancelled",1,0)) %>% select(`Appointment Status`, `College`,IsCancelled)
+#table(SessionSchoolCancel$Status)
+SessionSchoolCancelAdjusted <- subset(SessionSchoolCancel, `Appointment Status`!="scheduled")
+
+
+SchoolCancelModel <- lm(IsCancelled ~ `College`, data=SessionSchoolCancelAdjusted)
+summary(SchoolCancelModel)
+
+
+
+
+
+SessionAttendNoShowAdjustedSchool <- SessionsWithAttendanceAdjusted %>% mutate(IsNoShow = ifelse(`Appointment Status`=="completed" & `Report Status`=="missed",1,0)) %>% select(`Appointment Status`, `College`, `Report Status`, Attended, IsNoShow)
+
+
+SchoolNoShowModel <- lm(IsNoShow ~ `College`, data=SessionAttendNoShowAdjustedSchool)
+summary(SchoolNoShowModel)
+```
+
+```{r}
+##sessions by student characteristics
+StudentSessions <- SessionsJoinedTutor_GradesEnrollment %>% select(`ID`, `Primary Major`, `Major Desc`, `Term`,`Participation Code Descr`,`Academic Year.x`, `Appointment Status`, `Report Status`,`Attended`, `Ethnic Group Code Desc All`,`Gender Sh Desc`,`Sport`,`Curr Participant Ind Dummy`,`Units Taken in Semester`,`Units Passed in Semester`,`Cum Gpa`,`College`)
+
+StudentSessions$Attended <- ifelse(StudentSessions$`Report Status`=="open" | is.na(StudentSessions$`Report Status`),NA,StudentSessions$Attended)
+
+SessionsByStudent <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(ID) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByStudent, "sessionsbystudent.csv")
+
+SessionsByEthnicty <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Ethnic Group Code Desc All`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByEthnicty, "sessionsbyethnicity.csv")
+
+StudentSessions <- StudentSessions %>% mutate(`Cleaned Ethnicity`=`Ethnic Group Code Desc All`) 
+StudentSessions$`Cleaned Ethnicity` <- ifelse(grepl("Not Hispan", StudentSessions$`Cleaned Ethnicity`), sub(', Not Hispan','',StudentSessions$`Cleaned Ethnicity`),StudentSessions$`Cleaned Ethnicity`)
+
+SessionsByCleanedEthnicity <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Cleaned Ethnicity`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByCleanedEthnicity, "sessionsbyethnicitywithouthispaniclisting.csv")
+
+StudentSessions <- StudentSessions %>% mutate(`Mixed Ethnicity`=`Cleaned Ethnicity`)
+StudentSessions$`Mixed Ethnicity` <- ifelse(grepl(",",StudentSessions$`Mixed Ethnicity`),"Mixed", StudentSessions$`Mixed Ethnicity`)
+
+##student who enter more then 1 race are mixed - also take out extra not hispanic selection
+SessionsByMixedEthnicity <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Mixed Ethnicity`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByMixedEthnicity, "sessions by ethnicity with mixed races denoted.csv")
+
+SessionsByGender <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Gender Sh Desc`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByGender, "sessionsbygender.csv")
+
+SessionsByYr <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Academic Year.x`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+StudentSessions <- StudentSessions %>% mutate(`Academic Year No RS`=`Academic Year.x`)
+StudentSessions$`Academic Year No RS` <- ifelse(grepl("RS-", StudentSessions$`Academic Year No RS`), sub('RS-','',StudentSessions$`Academic Year No RS`),StudentSessions$`Academic Year No RS`)
+
+write_csv(SessionsByYr, "sessionsbyacademicyearwithrecruitmentstatus.csv")
+
+SessionsByYrNoRS <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Academic Year No RS`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByYrNoRS, "sessionsbyacademicyear.csv")
+
+SessionsByRecruit <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Participation Code Descr`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByRecruit, "sessionsbyrecruit.csv")
+
+SessionsByMajor <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Major Desc`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByMajor, "sessionsbymajor.csv")
+
+SessionsByCollege <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`College`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByCollege, "sessionsbycollege.csv")
+
+SessionsBySport <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Sport`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsBySport, "sessionsbysport.csv")
+
+SessionsByCurrentParticipant <- StudentSessions %>% arrange(StudentSessions$Term) %>% group_by(`Curr Participant Ind Dummy`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByCurrentParticipant, "sessionsbyCP.csv")
+
+SessionsKnown <- subset(StudentSessions, !is.na(`Attended`))
+
+Attendance_GPA_Model <- lm(`Attended` ~ `Cum Gpa`, data=SessionsKnown)
+summary(Attendance_GPA_Model)
+
+AttendanceUnitsTakenModel <- lm(`Attended` ~ `Units Taken in Semester`, data=SessionsKnown)
+summary(AttendanceUnitsTakenModel)
+
+##if statement for grade bin
+SessionsKnown <- SessionsKnown %>% mutate(`Grade Bin`=ifelse(SessionsKnown$`Cum Gpa` == 4.0, 'A', ifelse(SessionsKnown$`Cum Gpa` >= 3.7 & SessionsKnown$`Cum Gpa` < 4.0, 'A-', ifelse(SessionsKnown$`Cum Gpa` >= 3.3 & SessionsKnown$`Cum Gpa` < 3.7, 'B+', ifelse(SessionsKnown$`Cum Gpa` >= 3.0 & SessionsKnown$`Cum Gpa` < 3.3, 'B', ifelse(SessionsKnown$`Cum Gpa` >= 2.7 & SessionsKnown$`Cum Gpa` < 3.0, 'B-', ifelse(SessionsKnown$`Cum Gpa` >= 2.3 & SessionsKnown$`Cum Gpa` < 2.7, 'C+', ifelse(SessionsKnown$`Cum Gpa` >= 2.0 & SessionsKnown$`Cum Gpa` < 2.3, 'C', ifelse(SessionsKnown$`Cum Gpa` >= 1.7 & SessionsKnown$`Cum Gpa` < 2.0, 'C-', ifelse(SessionsKnown$`Cum Gpa` >= 1.3 & SessionsKnown$`Cum Gpa` < 1.7, 'D+', ifelse(SessionsKnown$`Cum Gpa` >= 1.0 & SessionsKnown$`Cum Gpa` < 1.7, 'D', ifelse(SessionsKnown$`Cum Gpa` >= 0.7 & SessionsKnown$`Cum Gpa` < 1.0, 'D-', 'F'))))))))))))
+
+SessionsByGradeBin <- SessionsKnown %>% arrange(SessionsKnown$Term) %>% group_by(`Grade Bin`) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsByGradeBin, "sessionsbygradebin.csv")
+```
+
+```{r}
+#unique(SessionsJoinedTutor_GradesEnrollment$Sport)
+##ensure sports are listed consistently and have proper apostrophes
+SessionsJoinedTutor_GradesEnrollment$Group <- ifelse(grepl("Mens",SessionsJoinedTutor_GradesEnrollment$Group) | grepl("Womens",SessionsJoinedTutor_GradesEnrollment$Group),sub('s','\'s',SessionsJoinedTutor_GradesEnrollment$Group),SessionsJoinedTutor_GradesEnrollment$Group)
+
+
+SessionsJoinedTutor_GradesEnrollment$Sport <- ifelse(is.na(SessionsJoinedTutor_GradesEnrollment$Sport),SessionsJoinedTutor_GradesEnrollment$Group,SessionsJoinedTutor_GradesEnrollment$Sport)
+SessionsJoinedTutor_GradesEnrollment$Sport <- ifelse(SessionsJoinedTutor_GradesEnrollment$Sport=="Men's Rowing","Men's Crew",SessionsJoinedTutor_GradesEnrollment$Sport)
+CombosSport <- unique(SessionsJoinedTutor_GradesEnrollment[c("Sport","Group")])
+
+
+SessionsJoinedTutor_GradesEnrollment[c("Group")] <- list(NULL)
+
+
+```
+
+
+```{r}
+##join sport season table to main data and get sessions by sport in season dummy
+SessionsJoinedTutor_GradesEnrollment_SportSeason <- SessionsJoinedTutor_GradesEnrollment %>% inner_join(SportSeason, by = c("Sport"="Sport"))
+
+SessionsJoinedTutor_GradesEnrollment_SportSeason$SD <- as.Date(SessionsJoinedTutor_GradesEnrollment_SportSeason$SD, format = "%m/%d/%Y")
+SessionsJoinedTutor_GradesEnrollment_SportSeason$ED <- as.Date(SessionsJoinedTutor_GradesEnrollment_SportSeason$ED, format = "%m/%d/%Y")
+SessionsJoinedTutor_GradesEnrollment_SportSeason$`Date` <- as.Date(SessionsJoinedTutor_GradesEnrollment_SportSeason$`Date`, format = "%m/%d/%Y")
+ 
+SessionsJoinedTutor_GradesEnrollment_SportSeason$InSeasonDummy <- as.integer(SessionsJoinedTutor_GradesEnrollment_SportSeason$`Date` >= SessionsJoinedTutor_GradesEnrollment_SportSeason$SD & SessionsJoinedTutor_GradesEnrollment_SportSeason$`Date` <= SessionsJoinedTutor_GradesEnrollment_SportSeason$ED)
+
+SportInfo <- SessionsJoinedTutor_GradesEnrollment_SportSeason %>% select(`Date`,`ID`,`Sport`,`SD`,`ED`,`InSeasonDummy`)
+
+SessionsJoinedTutor_GradesEnrollment_SportSeason$Attended <- ifelse(SessionsJoinedTutor_GradesEnrollment_SportSeason$`Report Status`=="open" | is.na(SessionsJoinedTutor_GradesEnrollment_SportSeason$`Report Status`),NA,SessionsJoinedTutor_GradesEnrollment_SportSeason$Attended)
+
+SessionsBySportInSeason <- SessionsJoinedTutor_GradesEnrollment_SportSeason %>% arrange(SessionsJoinedTutor_GradesEnrollment_SportSeason$Term) %>% group_by(InSeasonDummy) %>% summarise(n=n(), `Known Attendance`=sum(!is.na(`Attended`)), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+write_csv(SessionsBySportInSeason, "sessionsbysportinseason.csv")
+
+OutOfSeason <- subset(SessionsJoinedTutor_GradesEnrollment_SportSeason, InSeasonDummy==0)
+InSeason <- subset(SessionsJoinedTutor_GradesEnrollment_SportSeason, InSeasonDummy==1)
+```
+
+```{r}
+##hours of tutoring weekly
+##get week of year
+SessionsJoinedTutor_GradesEnrollment <- SessionsJoinedTutor_GradesEnrollment %>% mutate(`Week`=yday(SessionsJoinedTutor_GradesEnrollment$Date)%/%7+1)
+WeeksMajors <- SessionsJoinedTutor_GradesEnrollment %>% select(Date, Week, `Major Desc`, College, Attended, `Scheduled Duration`, `Actual Duration`)
+
+#convert session duration into hours - use scheduled if attended and actual not listed - only use sessions attended for this 
+WeeksMajorsAttended <- subset(WeeksMajors, Attended==1)
+WeeksMajorsAttended$`Actual Duration` <- ifelse(WeeksMajorsAttended$`Actual Duration`=="Unknown",WeeksMajorsAttended$`Scheduled Duration`,WeeksMajorsAttended$`Actual Duration`)
+WeeksMajorsAttended$`Actual Duration` <- as.numeric(WeeksMajorsAttended$`Actual Duration`)
+WeeksMajorsAttended <- WeeksMajorsAttended %>% mutate(Hours=`Actual Duration`/60)
+
+SchoolWeeklyAverages <- WeeksMajorsAttended %>% group_by(Week, College) %>% summarise(`Avg Hours`=mean(Hours))
+SchoolWeeklyHours <- SchoolWeeklyAverages %>% group_by(College) %>% summarise(`Hours Per Week`=mean(`Avg Hours`))
+
+write_csv(SchoolWeeklyHours, "schoolweeklyhours.csv")
+
+MajorWeeklyAverages <- WeeksMajorsAttended %>% group_by(Week, `Major Desc`) %>% summarise(`Avg Hours`=mean(Hours))
+MajorWeeklyHours <- MajorWeeklyAverages %>% group_by(`Major Desc`) %>% summarise(`Hours Per Week`=mean(`Avg Hours`))
+
+write_csv(MajorWeeklyHours, "majorweeklyhours.csv")
+#8/1
+```
+
+```{r}
+##Check for Tut vs IA Consistency
+ComboJoinApt <- unique(SessionsJoinedTutor_GradesEnrollment[c("Appointment Name","Appointment Type")])
+ComboJoinApt <- ComboJoinApt %>% mutate(IsConsistent=ifelse(`Appointment Name`==`Appointment Type`,1,0))
+unique(SessionsJoinedTutor_GradesEnrollment$`Appointment Type`)
+
+##Get number of student athletes and sessions by major
+StudentSessionsApt <- SessionsJoinedTutor_GradesEnrollment %>% select(`Major Desc`, `Appointment Type`)
+NumSessionsByMajor <- StudentSessionsApt %>% arrange(StudentSessions$Term) %>% group_by(`Major Desc`, `Appointment Type`) %>% summarise(n=n())
+
+NumStudentAthletes <- Grades_Enrollment %>% select(`Major Desc`, `SUID`)
+NumStudentAthletes <- NumStudentAthletes[!duplicated(NumStudentAthletes), ]
+NumStudentAthletesByMajor <- NumStudentAthletes %>% group_by(`Major Desc`) %>% summarise(n=n())
+
+##get ratio
+NumSessionsByMajor_NumStudentAthletesByMajor <- NumSessionsByMajor %>% left_join(NumStudentAthletesByMajor, by=c("Major Desc"="Major Desc"))
+SessionsToAthleteRatioByMajor <- NumSessionsByMajor_NumStudentAthletesByMajor %>% mutate(`Session Athlete Ratio`=n.x/n.y) %>% rename(`Num Sessions`=n.x, `Num Athletes`=n.y)
+
+AttPctByMajor <- SessionsByMajor %>% select(`Major Desc`,`Did Attend Pct`)
+SessionsToAthleteRatioByMajor <- SessionsToAthleteRatioByMajor %>% left_join(AttPctByMajor, by=c("Major Desc"="Major Desc"))
+
+SessionsToAthleteRatioByMajorTutoring <- subset(SessionsToAthleteRatioByMajor, SessionsToAthleteRatioByMajor$`Appointment Type`=="Tutoring")
+SessionsToAthleteRatioByMajorIA <- subset(SessionsToAthleteRatioByMajor, SessionsToAthleteRatioByMajor$`Appointment Type`=="Instructional Assistant")
+
+write_csv(SessionsToAthleteRatioByMajor, "sessions vs number of athletes.csv")
+write_csv(SessionsToAthleteRatioByMajorTutoring, "sessions vs number of athletes tutoring.csv")
+write_csv(SessionsToAthleteRatioByMajorIA, "sessions vs number of athletes ia.csv")
+
+```
+
+```{r}
+SyracuseWeather <- read_csv("cuseweather.csv")
+```
+
+```{r}
+Weather <- SyracuseWeather
+
+##Get rid of unlisted condition
+Weather <- subset(Weather, Weather$Condition!="N/A")
+
+##Get rid of units and convert to num
+Weather$`Wind Speed` <- as.numeric(gsub("([0-9]+).*$", "\\1", Weather$`Wind Speed`))
+Weather$`Wind Gust` <- as.numeric(gsub("([0-9]+).*$", "\\1", Weather$`Wind Gust`))
+Weather$`Pressure` <- substr(Weather$`Pressure`, 1,5) %>% as.numeric()
+Weather$`Precip.` <- substr(Weather$`Precip.`, 1,3) %>% as.numeric()
+Weather$`Temperature` <- as.numeric(gsub("([0-9]+).*$", "\\1", Weather$`Temperature`))
+Weather$`Dew Point` <- as.numeric(gsub("([0-9]+).*$", "\\1", Weather$`Dew Point`))
+Weather$`Humidity` <- as.numeric(gsub("([0-9]+).*$", "\\1", Weather$`Humidity`))
+
+
+##Check different conditions
+unique(Weather$Condition)
+
+##Check wind direction
+unique(Weather$Wind)
+
+##Get rid of row with almost all zeros and replace wind NAs with CALM
+Weather <- subset(Weather, !(is.na(Weather$Wind) & Weather$Date=="2024-03-18"))
+Weather$Wind <- ifelse(is.na(Weather$Wind), "CALM", Weather$Wind)
+
+
+Weather$Time <- as.POSIXct(Weather$Time)
+
+
+
+Weather <- Weather %>% mutate(`Nearest Hour`=round_date(Weather$Time, "hour"))
+Weather$Time <- format(Weather$Time, "%I:%M %p")
+Weather$`Nearest Hour` <- format(Weather$`Nearest Hour`, "%I:%M %p")
+Weather <- subset(Weather, substr(Weather$Time,4,5)==54)
+
+```
+
+```{r}
+##join weather to main data
+#unique(substr(SessionsJoinedTutor_GradesEnrollment_SportSeason$`Scheduled Start Time`,4,5))
+SessionsJoinedTutor_GradesEnrollment_SportSeason_Weather <- SessionsJoinedTutor_GradesEnrollment_SportSeason %>% left_join(Weather, by=c("Date"="Date", "Rounded Start Time" = "Nearest Hour"))
+
+##get important columns
+WeatherAttendance <- SessionsJoinedTutor_GradesEnrollment_SportSeason_Weather %>% select(`Condition`,`Precip.`,`Wind Speed`,`Wind Gust`,`Temperature`,`Humidity`,`Dew Point`,`Appointment Status`,`Report Status`,`Attended`,`Date`,`Rounded Start Time`,`ID`)  %>% mutate(`Temp Dew Diff`=`Temperature`-`Dew Point`, `Temp Sq`=`Temperature`^2)
+WeatherAttendanceAdjusted <- subset(WeatherAttendance, !is.na(WeatherAttendance$Attended) & !is.na(WeatherAttendance$Condition)) 
+
+##create dummies for bins
+WeatherSessionsByCondition <- WeatherAttendanceAdjusted %>% group_by(`Condition`) %>% summarise(`Known Attendance`=n(), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100)
+
+WeatherAttendanceAdjusted <- WeatherAttendanceAdjusted %>% mutate(`Sig Rainy?`=ifelse(grepl("Rain", `Condition`),1,0), `Snowy?`=ifelse(grepl("Snow", `Condition`) | grepl("Wintry Mix", `Condition`),1,0), `Windy?`=ifelse(grepl("Windy", `Condition`),1,0), `Foggy?`=ifelse(grepl("Fog", `Condition`),1,0))
+
+WeatherAttendanceAdjusted <- WeatherAttendanceAdjusted %>% mutate(`Below Freezing?`=ifelse(`Temperature`<=32,1,0 ), `Cold?`=ifelse(`Temperature`<=50 & `Temperature`>32,1,0), `Hoodie Weather?`=ifelse(`Temperature`<=65 & `Temperature`>50,1,0), `Nice?`=ifelse(`Temperature`<=85 & `Temperature`>65,1,0), `Hot?`=ifelse(`Temperature`>85,1,0), `Precip Over Zero?`=ifelse(`Precip.`>0,1,0))
+
+WeatherAttendanceAdjusted <- WeatherAttendanceAdjusted %>% mutate(`Below Freezing Or Cold?`=ifelse(`Temperature`<=50,1,0 ), `Hoodie Weather Or Nice?`=ifelse(`Temperature`<=85 & `Temperature`>50,1,0), `Sig Rainy Or Snowy?`=ifelse(`Sig Rainy?`==1 | `Snowy?`==1,1,0), `Miserable?`=ifelse(`Below Freezing Or Cold?`==1 & `Sig Rainy Or Snowy?`==1,1,0), `Peaceful?`=ifelse(`Hoodie Weather Or Nice?`==1 & `Sig Rainy Or Snowy?`==0,1,0), `Wind Without Precip?`=ifelse(`Wind Speed`>=15 & `Sig Rainy Or Snowy?`==0,1,0), `Calm Air Without Precip?`=ifelse(`Wind Speed`<15 & `Sig Rainy Or Snowy?`==0,1,0), `Wind With Precip?`=ifelse(`Wind Speed`>=15 & `Sig Rainy Or Snowy?`==1,1,0), `Calm Air With Precip?`=ifelse(`Wind Speed`<15 & `Sig Rainy Or Snowy?`==1,1,0)) 
+
+##get weather condition, temp, and combo bins data 
+GetWeatherBin <- function(j) {
+  WeatherSessionsByBin <- WeatherAttendanceAdjusted %>% group_by(.data[[j]]) %>% summarise(`Known Attendance`=n(), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100) %>% rename(`Condition Bin`=j)
+  WeatherSessionsByBin$`Condition Bin` <- ifelse(WeatherSessionsByBin$`Condition Bin`==1, substr(j,1,nchar(j)-1), paste0("Not ",substr(j,1,nchar(j)-1)))
+  return(WeatherSessionsByBin)
+}
+
+WeatherSessionsByConditionBins <- tibble()
+for(i in colnames(WeatherAttendanceAdjusted)[16:19]){
+  WeatherBin <- GetWeatherBin(i)
+  WeatherSessionsByConditionBins <- WeatherSessionsByConditionBins %>% bind_rows(WeatherBin)
+}
+WeatherSessionsByTempBins <- tibble()
+for(i in colnames(WeatherAttendanceAdjusted)[20:25]){
+  WeatherBin <- GetWeatherBin(i)
+  WeatherSessionsByTempBins <- WeatherSessionsByTempBins %>% bind_rows(WeatherBin)
+}
+WeatherSessionsByTempConditionBins <- tibble()
+for(i in colnames(WeatherAttendanceAdjusted)[26:ncol(WeatherAttendanceAdjusted)]){
+  WeatherBin <- GetWeatherBin(i)
+  WeatherSessionsByTempConditionBins <- WeatherSessionsByTempConditionBins %>% bind_rows(WeatherBin)
+}
+
+write_csv(WeatherSessionsByConditionBins, "weather sessions by specific conditions.csv")
+write_csv(WeatherSessionsByTempBins, "weather sessions by specific temperature bins.csv")
+write_csv(WeatherSessionsByTempConditionBins, "weather sessions by temp condition combo bins.csv")
+
+```
+
+```{r}
+##weather models
+WeatherAttendanceModel1 <- lm(`Attended` ~ `Wind Speed`+`Sig Rainy?`+`Snowy?`+`Windy?`+`Foggy?`, data=WeatherAttendanceAdjusted)
+#summary(WeatherAttendanceModel1)
+car::vif(WeatherAttendanceModel1)
+
+WeatherAttendanceModel2 <- lm(`Attended` ~ `Below Freezing?`+`Cold?`+`Hoodie Weather?`+`Hot?`, data=WeatherAttendanceAdjusted)
+#summary(WeatherAttendanceModel2)
+car::vif(WeatherAttendanceModel2)
+
+WeatherComboModel <- lm(`Attended` ~ `Peaceful?`+`Miserable?`, data=WeatherAttendanceAdjusted)
+#summary(WeatherComboModel)
+car::vif(WeatherComboModel)
+
+WeatherComboModel2 <-  lm(`Attended` ~ `Below Freezing Or Cold?`+`Sig Rainy Or Snowy?`, data=WeatherAttendanceAdjusted)
+#summary(WeatherComboModel2)
+car::vif(WeatherComboModel2)
+
+WindModel <- lm(`Attended` ~ `Wind Without Precip?`+`Wind With Precip?`+`Calm Air With Precip?`, data=WeatherAttendanceAdjusted)
+#summary(WindModel)
+car::vif(WindModel)
+
+TempAttendanceModel <- lm(`Attended` ~ `Temperature` + `Temp Sq`, data=WeatherAttendanceAdjusted)
+#summary(TempAttendanceModel)
+
+DewpointAttendanceModel <- lm(`Attended` ~ `Dew Point`, data=WeatherAttendanceAdjusted)
+#summary(DewpointAttendanceModel)
+
+##No Effect
+TempDewDiffModel <- lm(`Attended` ~ `Temp Dew Diff`, data=WeatherAttendanceAdjusted)
+#summary(TempDewDiffModel)
+
+bptest(WeatherAttendanceModel1)
+coeftest(WeatherAttendanceModel1, vcov=hccm)
+
+bptest(WeatherAttendanceModel2)
+coeftest(WeatherAttendanceModel2, vcov=hccm)
+
+bptest(WeatherComboModel)
+coeftest(WeatherComboModel, vcov=hccm)
+
+bptest(WeatherComboModel2)
+coeftest(WeatherComboModel2, vcov=hccm)
+
+bptest(TempAttendanceModel)
+coeftest(TempAttendanceModel, vcov=hccm)
+
+bptest(DewpointAttendanceModel)
+coeftest(DewpointAttendanceModel, vcov=hccm)
+
+bptest(WindModel)
+coeftest(WindModel, vcov=hccm)
+
+```
+
+```{r}
+#change dummy back to text for consistency with older tables used for student characteristic analysis
+SessionsJoinedTutor_GradesEnrollment_SportSeason_Weather$InSeasonDummy <- ifelse(SessionsJoinedTutor_GradesEnrollment_SportSeason_Weather$InSeasonDummy==1,"In Season", ifelse(SessionsJoinedTutor_GradesEnrollment_SportSeason_Weather$InSeasonDummy==0, "Not In Season", SessionsBySportInSeason$InSeasonDummy))
+
+##get necessary characteristics
+WeatherAttendanceCharacteristics <- SessionsJoinedTutor_GradesEnrollment_SportSeason_Weather %>% select(`Condition`,`Precip.`,`Wind Speed`,`Wind Gust`,`Temperature`,`Humidity`,`Dew Point`,`Appointment Status`,`Report Status`,`Attended`,`Date`,`Rounded Start Time`,`ID`,`Ethnic Group Code Desc All`,`Cum Gpa`,`Gender Sh Desc`,Sport, College, `Major Desc`, `Acad Level Begin Term Desc`,`InSeasonDummy`)  
+WeatherAttendanceCharacteristics <- WeatherAttendanceCharacteristics %>% mutate(`Cleaned Ethnicity`=`Ethnic Group Code Desc All`, `Grade Bin`=ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` == 4.0, 'A', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 3.7 & WeatherAttendanceCharacteristics$`Cum Gpa` < 4.0, 'A-', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 3.3 & WeatherAttendanceCharacteristics$`Cum Gpa` < 3.7, 'B+', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 3.0 & WeatherAttendanceCharacteristics$`Cum Gpa` < 3.3, 'B', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 2.7 & WeatherAttendanceCharacteristics$`Cum Gpa` < 3.0, 'B-', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 2.3 & WeatherAttendanceCharacteristics$`Cum Gpa` < 2.7, 'C+', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 2.0 & WeatherAttendanceCharacteristics$`Cum Gpa` < 2.3, 'C', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 1.7 & WeatherAttendanceCharacteristics$`Cum Gpa` < 2.0, 'C-', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 1.3 & WeatherAttendanceCharacteristics$`Cum Gpa` < 1.7, 'D+', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 1.0 & WeatherAttendanceCharacteristics$`Cum Gpa` < 1.7, 'D', ifelse(WeatherAttendanceCharacteristics$`Cum Gpa` >= 0.7 & WeatherAttendanceCharacteristics$`Cum Gpa` < 1.0, 'D-', 'F'))))))))))))
+
+WeatherAttendanceCharacteristics$`Cleaned Ethnicity` <- ifelse(grepl("Not Hispan", WeatherAttendanceCharacteristics$`Cleaned Ethnicity`), sub(', Not Hispan','',WeatherAttendanceCharacteristics$`Cleaned Ethnicity`),WeatherAttendanceCharacteristics$`Cleaned Ethnicity`)
+WeatherAttendanceCharacteristics <- WeatherAttendanceCharacteristics %>% mutate(`Mixed Ethnicity`=`Cleaned Ethnicity`)
+WeatherAttendanceCharacteristics$`Mixed Ethnicity` <- ifelse(grepl(",",WeatherAttendanceCharacteristics$`Mixed Ethnicity`),"Mixed", WeatherAttendanceCharacteristics$`Mixed Ethnicity`)
+
+##make sure attendance and weather is known
+WeatherAttendanceCharacteristicsAdjusted <- subset(WeatherAttendanceCharacteristics, !is.na(WeatherAttendanceCharacteristics$Attended) & !is.na(WeatherAttendanceCharacteristics$Condition))
+
+##create weather bins again
+WeatherAttendanceCharacteristicsAdjusted <- WeatherAttendanceCharacteristicsAdjusted %>% mutate(`Sig Rainy?`=ifelse(grepl("Rain", `Condition`),1,0), `Snowy?`=ifelse(grepl("Snow", `Condition`) | grepl("Wintry Mix", `Condition`),1,0), `Windy?`=ifelse(grepl("Windy", `Condition`),1,0))
+
+WeatherAttendanceCharacteristicsAdjusted <- WeatherAttendanceCharacteristicsAdjusted %>% mutate(`Below Freezing?`=ifelse(`Temperature`<=32,1,0 ), `Cold?`=ifelse(`Temperature`<=50 & `Temperature`>32,1,0), `Hoodie Weather?`=ifelse(`Temperature`<=65 & `Temperature`>50,1,0), `Nice?`=ifelse(`Temperature`<=85 & `Temperature`>65,1,0), `Hot?`=ifelse(`Temperature`>85,1,0), `Precip Over Zero?`=ifelse(`Precip.`>0,1,0))
+
+WeatherAttendanceCharacteristicsAdjusted <- WeatherAttendanceCharacteristicsAdjusted %>% mutate(`Below Freezing Or Cold?`=ifelse(`Temperature`<=50,1,0 ), `Hoodie Weather Or Nice?`=ifelse(`Temperature`<=85 & `Temperature`>50,1,0), `Sig Rainy Or Snowy?`=ifelse(`Sig Rainy?`==1 | `Snowy?`==1,1,0), `Miserable?`=ifelse(`Below Freezing Or Cold?`==1 & `Sig Rainy Or Snowy?`==1,1,0), `Peaceful?`=ifelse(`Hoodie Weather Or Nice?`==1 & `Sig Rainy Or Snowy?`==0,1,0), `Wind Without Precip?`=ifelse(`Wind Speed`>=15 & `Sig Rainy Or Snowy?`==0,1,0), `Calm Air Without Precip?`=ifelse(`Wind Speed`<15 & `Sig Rainy Or Snowy?`==0,1,0), `Wind With Precip?`=ifelse(`Wind Speed`>=15 & `Sig Rainy Or Snowy?`==1,1,0), `Calm Air With Precip?`=ifelse(`Wind Speed`<15 & `Sig Rainy Or Snowy?`==1,1,0))
+
+
+
+##get combo bins of weather and characteristic with function and loop
+GetWeatherCharBin <- function(k, j) {
+  WeatherCharSessionsByBin <- WeatherAttendanceCharacteristicsAdjusted %>% group_by(.data[[k]], .data[[j]]) %>% summarise(`Known Attendance`=n(), `Did Attend`=sum(`Attended`==1 & !is.na(`Attended`)), `Did Not Attend`=sum(`Attended`==0 & !is.na(`Attended`)), `Did Attend Pct`=`Did Attend`/`Known Attendance`*100) %>% rename(`Condition Bin`=j, `Characteristic`=k)
+  WeatherCharSessionsByBin$`Condition Bin` <- ifelse(WeatherCharSessionsByBin$`Condition Bin`==1, substr(j,1,nchar(j)-1), paste0("Not ",substr(j,1,nchar(j)-1)))
+  WeatherCharSessionsByBin$`Characteristic` <- as.character(WeatherCharSessionsByBin$`Characteristic`)
+  return(WeatherCharSessionsByBin)
+}
+
+aspects <- colnames(WeatherAttendanceCharacteristicsAdjusted)[16:24]
+aspects <- aspects[!aspects=="Cum Gpa"]
+aspects <- aspects[!aspects=="Cleaned Ethnicity"]
+WeatherCharSessionsByConditionBins <- tibble()
+for(k in aspects){
+  for(j in colnames(WeatherAttendanceCharacteristicsAdjusted)[25:ncol(WeatherAttendanceCharacteristicsAdjusted)]){
+    BigBin <- GetWeatherCharBin(k, j)
+    WeatherCharSessionsByConditionBins <- WeatherCharSessionsByConditionBins %>% bind_rows(BigBin)
+  }}
+
+WeatherCharSessionsByConditionBinsFiltered <- subset(WeatherCharSessionsByConditionBins, !is.na(`Characteristic`))
+
+
+```
+
+```{r}
+##use student characteristic data to bring attend % to new table
+SessionsBySportInSeason$InSeasonDummy <- ifelse(SessionsBySportInSeason$InSeasonDummy==1,"In Season", ifelse(SessionsBySportInSeason$InSeasonDummy==0, "Not In Season", SessionsBySportInSeason$InSeasonDummy))
+SessionCharacteristics <- list(SessionsByMajor, SessionsByCollege, SessionsByGender, SessionsBySportInSeason, SessionsBySport, SessionsByYrNoRS, SessionsByGradeBin, SessionsByMixedEthnicity)
+
+WeatherCharSessionsByConditionBinsFilteredWithAtt <- tibble()
+
+for(i in SessionCharacteristics){
+  SessionsByCharacteristicAttPct <- i %>% select(1, `Known Attendance`, `Did Attend Pct`) %>% rename(`Characteristic`=1, `Known Attendance For Characteristic`=`Known Attendance`, `Did Attend Pct Characteristic`=`Did Attend Pct`)
+  BinsWithAtt <- WeatherCharSessionsByConditionBinsFiltered %>% inner_join(SessionsByCharacteristicAttPct, by=c("Characteristic"="Characteristic"))
+  WeatherCharSessionsByConditionBinsFilteredWithAtt <- WeatherCharSessionsByConditionBinsFilteredWithAtt %>% bind_rows(BinsWithAtt)
+}
+
+#get difference between characteristic attend % and characteristic-weather combo attend %
+WeatherCharSessionsByConditionBinsFilteredWithAtt <- WeatherCharSessionsByConditionBinsFilteredWithAtt %>% mutate(`Char Att Diff`= round(`Did Attend Pct Characteristic`-`Did Attend Pct`, digits = 2))
+
+ComboWeatherCharacteristic <- unique(WeatherCharSessionsByConditionBinsFiltered[c("Characteristic","Condition Bin")])
+ComboWeatherCharacteristicWithAtt <- unique(WeatherCharSessionsByConditionBinsFilteredWithAtt[c("Characteristic","Condition Bin")])
+
+WeatherSessionsByAll <- bind_rows(WeatherSessionsByConditionBins, WeatherSessionsByTempBins, WeatherSessionsByTempConditionBins)
+
+##same for weather vs combo as characteristic vs combo above
+SessionsByWeatherAttPct <- WeatherSessionsByAll %>% select(`Condition Bin`, `Known Attendance`, `Did Attend Pct`) %>% rename(`Known Attendance For Condition Bin`=`Known Attendance`, `Did Attend Pct Condition Bin`=`Did Attend Pct`)
+WeatherCharSessionsByConditionBinsFilteredWithAtt2 <- WeatherCharSessionsByConditionBinsFilteredWithAtt %>% inner_join(SessionsByWeatherAttPct, by=c("Condition Bin"="Condition Bin"))
+
+WeatherCharSessionsByConditionBinsFilteredWithAtt2 <- WeatherCharSessionsByConditionBinsFilteredWithAtt2 %>% mutate(`Con Bin Att Diff`= round(`Did Attend Pct Condition Bin`-`Did Attend Pct`, digits = 2), `Char Con Bin`= paste0(Characteristic," + ", `Condition Bin`))
+
+WeatherCharSessionsByConditionBinsFilteredWithAtt2Trimmed <- subset(WeatherCharSessionsByConditionBinsFilteredWithAtt2, `Char Att Diff`>=5 | `Char Att Diff`<= -5 | `Con Bin Att Diff`>=5 | `Con Bin Att Diff`<= -5)
+WeatherCharSessionsByConditionBinsFilteredWithAtt2Trimmed <- subset(WeatherCharSessionsByConditionBinsFilteredWithAtt2Trimmed, `Known Attendance`>=100)
+
+write_csv(WeatherCharSessionsByConditionBinsFilteredWithAtt2Trimmed, "weather characteristics combo attendance with deviations.csv")
+```
+
+```{r}
+##NoShow data
+NoShowsByMajor <- SessionAttendNoShowAdjustedMajor %>% group_by(`Primary Major`) %>% summarise(n=n(), `Did Show`=sum(`IsNoShow`==0), `Did Not Show`=sum(`IsNoShow`==1), `Known Show`=`Did Show`+`Did Not Show`, `No Show pct`=(`Did Not Show`/(`Did Show`+`Did Not Show`))*100)
+write_csv(NoShowsByMajor, "noshows by major.csv")
+
+NoShowsBySchool <- SessionAttendNoShowAdjustedSchool %>% group_by(`College`) %>% summarise(n=n(), `Did Show`=sum(`IsNoShow`==0), `Did Not Show`=sum(`IsNoShow`==1), `Known Show`=`Did Show`+`Did Not Show`, `No Show pct`=(`Did Not Show`/(`Did Show`+`Did Not Show`))*100)
+write_csv(NoShowsBySchool, "noshows by school.csv")
+```
+
+```{r}
+##cancel data
+CancelByMajor <- SessionMajorCancelAdjusted %>% group_by(`Primary Major`) %>% summarise(n=n(), `No Cancel`=sum(`IsCancelled`==0), `Cancel`=sum(`IsCancelled`==1), `Known Cancel`=`No Cancel`+`Cancel`, `Cancel pct`=(`Cancel`/(`Cancel`+`No Cancel`))*100)
+write_csv(CancelByMajor, "cancel by major.csv")
+
+CancelBySchool<- SessionSchoolCancelAdjusted %>% group_by(`College`) %>% summarise(n=n(), `No Cancel`=sum(`IsCancelled`==0), `Cancel`=sum(`IsCancelled`==1), `Known Cancel`=`No Cancel`+`Cancel`, `Cancel pct`=(`Cancel`/(`Cancel`+`No Cancel`))*100)
+write_csv(CancelBySchool, "cancel by school.csv")
+```
+

@@ -1,0 +1,544 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<!-- build 20242.24.0613.1930                               -->
+<workbook original-version='18.1' source-build='2024.2.0 (20242.24.0613.1930)' source-platform='win' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-format-change-manifest>
+    <_.fcp.AccessibleZoneTabOrder.true...AccessibleZoneTabOrder />
+    <_.fcp.AnimationOnByDefault.true...AnimationOnByDefault />
+    <AutoCreateAndUpdateDSDPhoneLayouts />
+    <_.fcp.MarkAnimation.true...MarkAnimation />
+    <_.fcp.ObjectModelEncapsulateLegacy.true...ObjectModelEncapsulateLegacy />
+    <_.fcp.ObjectModelTableType.true...ObjectModelTableType />
+    <_.fcp.SchemaViewerObjectModel.true...SchemaViewerObjectModel />
+    <SetMembershipControl />
+    <SheetIdentifierTracking />
+    <WindowsPersistSimpleIdentifiers />
+    <WorksheetBackgroundTransparency />
+  </document-format-change-manifest>
+  <preferences>
+    <preference name='ui.encoding.shelf.height' value='24' />
+    <preference name='ui.shelf.height' value='26' />
+  </preferences>
+  <_.fcp.AnimationOnByDefault.false...style>
+    <_.fcp.AnimationOnByDefault.false..._.fcp.MarkAnimation.true...style-rule element='animation'>
+      <_.fcp.AnimationOnByDefault.false...format attr='animation-on' value='ao-on' />
+    </_.fcp.AnimationOnByDefault.false..._.fcp.MarkAnimation.true...style-rule>
+  </_.fcp.AnimationOnByDefault.false...style>
+  <datasources>
+    <datasource caption='sessionsbyrecruit' inline='true' name='federated.0xpovdq0xo5phm1333o541uvgxep' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='sessionsbyrecruit' name='textscan.12a3a9b1m56zis14sael01hwjwho'>
+            <connection class='textscan' directory='C:/Users/User/Documents/Syracuse Summer Work 2024' filename='sessionsbyrecruit.csv' password='' server='' />
+          </named-connection>
+        </named-connections>
+        <_.fcp.ObjectModelEncapsulateLegacy.false...relation connection='textscan.12a3a9b1m56zis14sael01hwjwho' name='sessionsbyrecruit.csv' table='[sessionsbyrecruit#csv]' type='table'>
+          <columns character-set='UTF-8' header='yes' locale='en_US' separator=','>
+            <column datatype='string' name='Participation Code Descr' ordinal='0' />
+            <column datatype='integer' name='n' ordinal='1' />
+            <column datatype='integer' name='Known Attendance' ordinal='2' />
+            <column datatype='integer' name='Did Attend' ordinal='3' />
+            <column datatype='integer' name='Did Not Attend' ordinal='4' />
+            <column datatype='real' name='Did Attend Pct' ordinal='5' />
+          </columns>
+        </_.fcp.ObjectModelEncapsulateLegacy.false...relation>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...relation connection='textscan.12a3a9b1m56zis14sael01hwjwho' name='sessionsbyrecruit.csv' table='[sessionsbyrecruit#csv]' type='table'>
+          <columns character-set='UTF-8' header='yes' locale='en_US' separator=','>
+            <column datatype='string' name='Participation Code Descr' ordinal='0' />
+            <column datatype='integer' name='n' ordinal='1' />
+            <column datatype='integer' name='Known Attendance' ordinal='2' />
+            <column datatype='integer' name='Did Attend' ordinal='3' />
+            <column datatype='integer' name='Did Not Attend' ordinal='4' />
+            <column datatype='real' name='Did Attend Pct' ordinal='5' />
+          </columns>
+        </_.fcp.ObjectModelEncapsulateLegacy.true...relation>
+        <metadata-records>
+          <metadata-record class='capability'>
+            <remote-name />
+            <remote-type>0</remote-type>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias />
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='string' name='character-set'>&quot;UTF-8&quot;</attribute>
+              <attribute datatype='string' name='collation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='field-delimiter'>&quot;,&quot;</attribute>
+              <attribute datatype='string' name='header-row'>&quot;true&quot;</attribute>
+              <attribute datatype='string' name='locale'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='single-char'>&quot;&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>Participation Code Descr</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[Participation Code Descr]</local-name>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias>Participation Code Descr</remote-alias>
+            <ordinal>0</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+            <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>n</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[n]</local-name>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias>n</remote-alias>
+            <ordinal>1</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>Known Attendance</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[Known Attendance]</local-name>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias>Known Attendance</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>Did Attend</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[Did Attend]</local-name>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias>Did Attend</remote-alias>
+            <ordinal>3</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>Did Not Attend</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[Did Not Attend]</local-name>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias>Did Not Attend</remote-alias>
+            <ordinal>4</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>Did Attend Pct</remote-name>
+            <remote-type>5</remote-type>
+            <local-name>[Did Attend Pct]</local-name>
+            <parent-name>[sessionsbyrecruit.csv]</parent-name>
+            <remote-alias>Did Attend Pct</remote-alias>
+            <ordinal>5</ordinal>
+            <local-type>real</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+          </metadata-record>
+        </metadata-records>
+      </connection>
+      <aliases enabled='yes' />
+      <column datatype='string' name='[Participation Code Descr]' role='dimension' type='nominal' />
+      <_.fcp.ObjectModelTableType.true...column caption='sessionsbyrecruit.csv' datatype='table' name='[__tableau_internal_object_id__].[sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0]' role='measure' type='quantitative' />
+      <column caption='N' datatype='integer' name='[n]' role='measure' type='quantitative' />
+      <column-instance column='[Participation Code Descr]' derivation='None' name='[none:Participation Code Descr:nk]' pivot='key' type='nominal' />
+      <layout _.fcp.SchemaViewerObjectModel.false...dim-percentage='0.5' _.fcp.SchemaViewerObjectModel.false...measure-percentage='0.4' dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[none:Participation Code Descr:nk]' type='palette'>
+            <map to='#808080'>
+              <bucket>&quot;Non-Recruited&quot;</bucket>
+            </map>
+            <map to='#ffd700'>
+              <bucket>&quot;Recruited&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;United States&quot;' />
+      </semantic-values>
+      <_.fcp.ObjectModelEncapsulateLegacy.true...object-graph>
+        <objects>
+          <object caption='sessionsbyrecruit.csv' id='sessionsbyrecruit.csv_23601E8A92E7428E960C55539B27BAA0'>
+            <properties context=''>
+              <relation connection='textscan.12a3a9b1m56zis14sael01hwjwho' name='sessionsbyrecruit.csv' table='[sessionsbyrecruit#csv]' type='table'>
+                <columns character-set='UTF-8' header='yes' locale='en_US' separator=','>
+                  <column datatype='string' name='Participation Code Descr' ordinal='0' />
+                  <column datatype='integer' name='n' ordinal='1' />
+                  <column datatype='integer' name='Known Attendance' ordinal='2' />
+                  <column datatype='integer' name='Did Attend' ordinal='3' />
+                  <column datatype='integer' name='Did Not Attend' ordinal='4' />
+                  <column datatype='real' name='Did Attend Pct' ordinal='5' />
+                </columns>
+              </relation>
+            </properties>
+          </object>
+        </objects>
+      </_.fcp.ObjectModelEncapsulateLegacy.true...object-graph>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sheet 1'>
+      <layout-options>
+        <title>
+          <formatted-text>
+            <run bold='true' fontalignment='1'>Attendance By Recruit Status</run>
+          </formatted-text>
+        </title>
+      </layout-options>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sessionsbyrecruit' name='federated.0xpovdq0xo5phm1333o541uvgxep' />
+          </datasources>
+          <datasource-dependencies datasource='federated.0xpovdq0xo5phm1333o541uvgxep'>
+            <column datatype='real' name='[Did Attend Pct]' role='measure' type='quantitative' />
+            <column datatype='integer' name='[Known Attendance]' role='measure' type='quantitative' />
+            <column datatype='string' name='[Participation Code Descr]' role='dimension' type='nominal' />
+            <column-instance column='[Participation Code Descr]' derivation='None' name='[none:Participation Code Descr:nk]' pivot='key' type='nominal' />
+            <column-instance column='[Did Attend Pct]' derivation='Sum' name='[sum:Did Attend Pct:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[Known Attendance]' derivation='Sum' name='[sum:Known Attendance:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]'>
+            <groupfilter function='except' user:ui-domain='database' user:ui-enumeration='exclusive' user:ui-marker='enumerate'>
+              <groupfilter function='level-members' level='[none:Participation Code Descr:nk]' />
+              <groupfilter function='member' level='[none:Participation Code Descr:nk]' member='&quot;NA&quot;' />
+            </groupfilter>
+          </filter>
+          <slices>
+            <column>[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]</column>
+          </slices>
+          <aggregation value='true' />
+        </view>
+        <style>
+          <style-rule element='axis'>
+            <encoding attr='space' class='0' field='[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Did Attend Pct:qk]' field-type='quantitative' max='100.0' min='0.0' range-type='fixed' scope='rows' type='space' />
+          </style-rule>
+        </style>
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Shape' />
+            <mark-sizing mark-sizing-setting='marks-scaling-off' />
+            <encodings>
+              <color column='[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]' />
+              <size column='[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Known Attendance:qk]' />
+              <text column='[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Known Attendance:qk]' />
+              <text column='[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Did Attend Pct:qk]' />
+            </encodings>
+            <customized-label>
+              <formatted-text>
+                <run>Known: &lt;</run>
+                <run>[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Known Attendance:qk]</run>
+                <run>&gt;&#10;Attend %: &lt;</run>
+                <run>[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Did Attend Pct:qk]</run>
+                <run>&gt;</run>
+              </formatted-text>
+            </customized-label>
+            <style>
+              <style-rule element='mark'>
+                <format attr='shape' value=':filled/plus' />
+                <format attr='size' value='2' />
+                <format attr='mark-color' value='#ffd700' />
+                <format attr='mark-labels-show' value='true' />
+                <format attr='mark-labels-cull' value='true' />
+              </style-rule>
+            </style>
+          </pane>
+        </panes>
+        <rows>[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Did Attend Pct:qk]</rows>
+        <cols>[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]</cols>
+      </table>
+      <simple-id uuid='{40905F14-DAAF-436A-AF58-9A6D80A237C1}' />
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard _.fcp.AccessibleZoneTabOrder.true...enable-sort-zone-taborder='true' name='Dashboard 1'>
+      <style />
+      <size sizing-mode='automatic' />
+      <zones>
+        <zone h='100000' id='4' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='98120' id='7' param='horz' type-v2='layout-flow' w='99152' x='424' y='940'>
+            <zone h='98120' id='5' type-v2='layout-basic' w='99152' x='424' y='940'>
+              <zone h='98120' id='3' name='Sheet 1' w='99152' x='424' y='940'>
+                <zone-style>
+                  <format attr='border-color' value='#000000' />
+                  <format attr='border-style' value='none' />
+                  <format attr='border-width' value='0' />
+                  <format attr='margin' value='4' />
+                </zone-style>
+              </zone>
+            </zone>
+          </zone>
+          <zone-style>
+            <format attr='border-color' value='#000000' />
+            <format attr='border-style' value='none' />
+            <format attr='border-width' value='0' />
+            <format attr='margin' value='8' />
+          </zone-style>
+        </zone>
+        <zone forceUpdate='true' h='3525' id='8' type-v2='text' w='19916' x='41098' y='38543'>
+          <formatted-text>
+            <run bold='true' fontalignment='1' fontcolor='#000000'>Sample size disparity but no difference here</run>
+          </formatted-text>
+        </zone>
+        <zone h='3525' id='9' type-v2='text' w='19191' x='39348' y='63690'>
+          <formatted-text>
+            <run bold='true' fontalignment='1' fontcolor='#000000'>Note 1411 Sessions with no status provided</run>
+          </formatted-text>
+        </zone>
+      </zones>
+      <devicelayouts>
+        <devicelayout auto-generated='true' name='Phone'>
+          <size maxheight='700' minheight='700' sizing-mode='vscroll' />
+          <zones>
+            <zone h='100000' id='13' type-v2='layout-basic' w='100000' x='0' y='0'>
+              <zone h='98120' id='12' param='vert' type-v2='layout-flow' w='99152' x='424' y='940'>
+                <zone fixed-size='280' h='98120' id='3' is-fixed='true' name='Sheet 1' w='99152' x='424' y='940'>
+                  <zone-style>
+                    <format attr='border-color' value='#000000' />
+                    <format attr='border-style' value='none' />
+                    <format attr='border-width' value='0' />
+                    <format attr='margin' value='4' />
+                    <format attr='padding' value='0' />
+                  </zone-style>
+                </zone>
+                <zone forceUpdate='true' h='3525' id='8' type-v2='text' w='19916' x='41098' y='38543'>
+                  <formatted-text>
+                    <run bold='true' fontalignment='1' fontcolor='#000000'>Sample size disparity but no difference here</run>
+                  </formatted-text>
+                  <zone-style>
+                    <format attr='border-color' value='#000000' />
+                    <format attr='border-style' value='none' />
+                    <format attr='border-width' value='0' />
+                    <format attr='margin' value='4' />
+                    <format attr='padding' value='0' />
+                  </zone-style>
+                </zone>
+                <zone h='3525' id='9' type-v2='text' w='19191' x='39348' y='63690'>
+                  <formatted-text>
+                    <run bold='true' fontalignment='1' fontcolor='#000000'>Note 1411 Sessions with no status provided</run>
+                  </formatted-text>
+                  <zone-style>
+                    <format attr='border-color' value='#000000' />
+                    <format attr='border-style' value='none' />
+                    <format attr='border-width' value='0' />
+                    <format attr='margin' value='4' />
+                    <format attr='padding' value='0' />
+                  </zone-style>
+                </zone>
+              </zone>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='8' />
+              </zone-style>
+            </zone>
+          </zones>
+        </devicelayout>
+      </devicelayouts>
+      <simple-id uuid='{6B3E7E03-7E7A-48FC-9E91-A42EA87189DF}' />
+    </dashboard>
+  </dashboards>
+  <windows saved-dpi-scale-factor='1.25' show-side-pane='false' source-height='37'>
+    <window class='worksheet' name='Sheet 1'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='title' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card pane-specification-id='0' param='[federated.0xpovdq0xo5phm1333o541uvgxep].[sum:Known Attendance:qk]' type='size' />
+            <card pane-specification-id='0' param='[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+      <viewpoint>
+        <zoom type='entire-view' />
+        <highlight>
+          <color-one-way>
+            <field>[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]</field>
+          </color-one-way>
+        </highlight>
+      </viewpoint>
+      <simple-id uuid='{01DED16E-5915-42BC-ABFD-9C817EB5D247}' />
+    </window>
+    <window class='dashboard' maximized='true' name='Dashboard 1'>
+      <viewpoints>
+        <viewpoint name='Sheet 1'>
+          <zoom type='entire-view' />
+          <highlight>
+            <color-one-way>
+              <field>[federated.0xpovdq0xo5phm1333o541uvgxep].[none:Participation Code Descr:nk]</field>
+            </color-one-way>
+          </highlight>
+        </viewpoint>
+      </viewpoints>
+      <active id='-1' />
+      <simple-id uuid='{ABC698F3-FCED-4397-AC8D-741CF2E3A92B}' />
+    </window>
+  </windows>
+  <thumbnails>
+    <thumbnail height='192' name='Dashboard 1' width='192'>
+      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
+    </thumbnail>
+    <thumbnail height='192' name='Sheet 1' width='192'>
+      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
+      b7ll/Q//X6ngfXEyBgAAAABJRU5ErkJggg==
+    </thumbnail>
+  </thumbnails>
+</workbook>

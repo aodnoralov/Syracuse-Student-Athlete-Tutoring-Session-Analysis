@@ -1,0 +1,138 @@
+Major Desc,Appointment Type,Num Sessions,Num Athletes,Session Athlete Ratio,Did Attend Pct
+Accounting-U,Tutoring,6,1,6,40
+Advanced Media Management,Tutoring,50,2,25,52.63157894736842
+Advertising,Tutoring,3,4,0.75,0
+Aerospace Engineering,Instructional Assistant,3,6,0.5,39.130434782608695
+Aerospace Engineering,Tutoring,29,6,4.833333333333333,39.130434782608695
+Applied Data Analytics,Instructional Assistant,39,2,19.5,73.91304347826086
+Applied Data Analytics,Tutoring,41,2,20.5,73.91304347826086
+Applied Data Science,Tutoring,5,3,1.6666666666666667,0
+Applied Mathematics,Instructional Assistant,37,1,37,75
+Applied Mathematics,Tutoring,37,1,37,75
+Art Photography,Instructional Assistant,69,1,69,69.23076923076923
+Art Photography,Tutoring,10,1,10,69.23076923076923
+Art Video,Instructional Assistant,18,1,18,70
+Arts and Sciences (Undeclared),Instructional Assistant,1008,48,21,77.63440860215054
+Arts and Sciences (Undeclared),Tutoring,405,48,8.4375,77.63440860215054
+Biochemistry,Tutoring,41,1,41,38.095238095238095
+Biochemistry-U,Instructional Assistant,17,3,5.666666666666667,59.25925925925925
+Biochemistry-U,Tutoring,36,3,12,59.25925925925925
+Bioengineering,Tutoring,5,4,1.25,40
+Biology,Instructional Assistant,57,22,2.590909090909091,56.770833333333336
+Biology,Tutoring,245,22,11.136363636363637,56.770833333333336
+Biomedical Engineering,Instructional Assistant,13,3,4.333333333333333,45.45454545454545
+Biotechnology,Instructional Assistant,11,4,2.75,54.83870967741935
+Biotechnology,Tutoring,51,4,12.75,54.83870967741935
+Broadcast & Digital Journalism,Instructional Assistant,26,10,2.6,62.68656716417911
+Broadcast & Digital Journalism,Tutoring,53,10,5.3,62.68656716417911
+Business Analytics-U,Tutoring,11,1,11,50
+Chemical Engineering,Tutoring,26,3,8.666666666666666,57.14285714285714
+Chemistry,Instructional Assistant,13,5,2.6,70.58823529411765
+Chemistry,Tutoring,7,5,1.4,70.58823529411765
+Civil Engineering,Instructional Assistant,47,9,5.222222222222222,69.38775510204081
+Civil Engineering,Tutoring,70,9,7.777777777777778,69.38775510204081
+Comm & Rhetorical Studies,Instructional Assistant,1273,63,20.206349206349206,75.13397642015005
+Comm & Rhetorical Studies,Tutoring,334,63,5.301587301587301,75.13397642015005
+Comm Sci & Disorders,Instructional Assistant,31,2,15.5,46.51162790697674
+Comm Sci & Disorders,Tutoring,22,2,11,46.51162790697674
+Computer Engineering,Instructional Assistant,8,3,2.6666666666666665,71.42857142857143
+Computer Engineering,Tutoring,59,3,19.666666666666668,71.42857142857143
+Computer Science,Instructional Assistant,3,4,0.75,59.09090909090909
+Computer Science,Tutoring,79,4,19.75,59.09090909090909
+Conflict and Collaboration,Tutoring,23,15,1.5333333333333334,42.10526315789473
+Creative Writing,Instructional Assistant,13,1,13,12.5
+Creative Writing,Tutoring,13,1,13,12.5
+Data Science,Tutoring,26,1,26,61.904761904761905
+Earth Sciences,Instructional Assistant,26,2,13,92
+Earth Sciences,Tutoring,25,2,12.5,92
+Economics,Instructional Assistant,331,42,7.880952380952381,62.8099173553719
+Economics,Tutoring,556,42,13.238095238095237,62.8099173553719
+Electrical Engineering,Instructional Assistant,36,2,18,67.24137931034483
+Electrical Engineering,Tutoring,29,2,14.5,67.24137931034483
+Engineering (Undeclared),Instructional Assistant,6,1,6,53.125
+Engineering (Undeclared),Tutoring,51,1,51,53.125
+Entrepren & Emerg Enterprises,Tutoring,62,16,3.875,46.42857142857143
+Entrepren&Emerg Enterprises-U,Instructional Assistant,49,5,9.8,84.84848484848484
+Entrepren&Emerg Enterprises-U,Tutoring,42,5,8.4,84.84848484848484
+Environmental Engineering,Tutoring,13,3,4.333333333333333,25
+Environmental Geoscience,Tutoring,15,2,7.5,50
+Fashion Design,Tutoring,12,3,4,80
+Finance,Instructional Assistant,66,24,2.75,60.60606060606061
+Finance,Tutoring,44,24,1.8333333333333333,60.60606060606061
+Finance-U,Instructional Assistant,153,15,10.2,70.63492063492063
+Finance-U,Tutoring,227,15,15.133333333333333,70.63492063492063
+Fine Arts,Instructional Assistant,24,1,24,95.23809523809523
+Food Studies,Instructional Assistant,50,2,25,91.11111111111111
+Food Studies,Tutoring,8,2,4,91.11111111111111
+Geography,Instructional Assistant,51,2,25.5,79.24528301886792
+Geography,Tutoring,48,2,24,79.24528301886792
+Geology,Tutoring,14,1,14,33.33333333333333
+Graphic Design,Tutoring,17,3,5.666666666666667,50
+Health and Exercise Science,Instructional Assistant,518,50,10.36,68.13880126182966
+Health and Exercise Science,Tutoring,475,50,9.5,68.13880126182966
+Health and Physical Education,Instructional Assistant,27,2,13.5,47.368421052631575
+"Higher Postsecondary Education,Intercol Athletc Advsng&Supprt",Instructional Assistant,1,1,1,0
+"Higher Postsecondary Education,Intercol Athletc Advsng&Supprt",Tutoring,1,1,1,0
+History,Instructional Assistant,151,10,15.1,71.28712871287128
+History,Tutoring,10,10,1,71.28712871287128
+Human Development & Family Sci,Instructional Assistant,420,23,18.26086956521739,75.24271844660194
+Human Development & Family Sci,Tutoring,297,23,12.91304347826087,75.24271844660194
+Industrial and Interaction Dsg,Instructional Assistant,38,1,38,73.07692307692307
+Info Mgmt & Technology,Instructional Assistant,73,8,9.125,60.1063829787234
+Info Mgmt & Technology,Tutoring,271,8,33.875,60.1063829787234
+"Instrctnl Des, Dvlpmnt, & Eval",Tutoring,2,2,1,100
+International Relations,Instructional Assistant,1,9,0.1111111111111111,48.148148148148145
+International Relations,Tutoring,37,9,4.111111111111111,48.148148148148145
+Liberal Studies,Instructional Assistant,8,NA,NA,NA
+Liberal Studies,Tutoring,9,NA,NA,NA
+Management (Undeclared),Instructional Assistant,84,8,10.5,54.60526315789473
+Management (Undeclared),Tutoring,121,8,15.125,54.60526315789473
+Management -U,Instructional Assistant,101,3,33.666666666666664,70.62937062937063
+Management -U,Tutoring,115,3,38.333333333333336,70.62937062937063
+Management Major,Instructional Assistant,53,6,8.833333333333334,71.42857142857143
+Management Major,Tutoring,53,6,8.833333333333334,71.42857142857143
+Marketing Management,Instructional Assistant,8,11,0.7272727272727273,50
+Marketing Management,Tutoring,66,11,6,50
+Marketing Management-U,Instructional Assistant,37,6,6.166666666666667,67.6923076923077
+Marketing Management-U,Tutoring,50,6,8.333333333333334,67.6923076923077
+Maxwell (Undeclared),Instructional Assistant,13,3,4.333333333333333,70
+Mechanical Engineering,Instructional Assistant,115,8,14.375,63.095238095238095
+Mechanical Engineering,Tutoring,126,8,15.75,63.095238095238095
+Neuroscience,Instructional Assistant,28,1,28,54.54545454545454
+Not Specified,Instructional Assistant,71,16,4.4375,51.724137931034484
+Nutrition Science,Instructional Assistant,11,3,3.6666666666666665,52
+Nutrition Science,Tutoring,48,3,16,52
+Policy Studies,Instructional Assistant,17,6,2.8333333333333335,87.5
+Policy Studies,Tutoring,26,6,4.333333333333333,87.5
+Political Philosophy,Instructional Assistant,35,1,35,68.18181818181817
+Political Philosophy,Tutoring,6,1,6,68.18181818181817
+Political Science,Instructional Assistant,25,12,2.0833333333333335,72.72727272727273
+Political Science,Tutoring,8,12,0.6666666666666666,72.72727272727273
+Psychology,Instructional Assistant,439,59,7.440677966101695,59.816513761467895
+Psychology,Tutoring,505,59,8.559322033898304,59.816513761467895
+Public Health,Instructional Assistant,35,8,4.375,63.07692307692307
+Public Health,Tutoring,49,8,6.125,63.07692307692307
+Public Relations,Instructional Assistant,53,7,7.571428571428571,78.48101265822784
+Public Relations,Tutoring,80,7,11.428571428571429,78.48101265822784
+Real Estate-U,Tutoring,40,2,20,50
+Recording&Entertainment Indust,Instructional Assistant,13,1,13,57.89473684210527
+Recording&Entertainment Indust,Tutoring,15,1,15,57.89473684210527
+Selected Studies In Educ,Instructional Assistant,107,12,8.916666666666666,73.4375
+Selected Studies In Educ,Tutoring,140,12,11.666666666666666,73.4375
+Sociology,Instructional Assistant,616,24,25.666666666666668,68.84875846501129
+Sociology,Tutoring,206,24,8.583333333333334,68.84875846501129
+Sport Analytics,Instructional Assistant,11,4,2.75,56.75675675675676
+Sport Analytics,Tutoring,37,4,9.25,56.75675675675676
+Sport Management,Instructional Assistant,194,26,7.461538461538462,71.73252279635258
+Sport Management,Tutoring,319,26,12.26923076923077,71.73252279635258
+Sport Venue & Event Management,Instructional Assistant,1,3,0.3333333333333333,42.857142857142854
+Sport Venue & Event Management,Tutoring,9,3,3,42.857142857142854
+Sport&Human Dynamic-Undeclared,Instructional Assistant,456,17,26.823529411764707,78.97310513447434
+Sport&Human Dynamic-Undeclared,Tutoring,300,17,17.647058823529413,78.97310513447434
+Supply Chain Management,Instructional Assistant,1,6,0.16666666666666666,62.5
+Supply Chain Management,Tutoring,23,6,3.8333333333333335,62.5
+Supply Chain Management-U,Instructional Assistant,2,NA,NA,0
+Teaching & Curriculum,Instructional Assistant,2,1,2,50
+"Television, Radio and Film",Instructional Assistant,79,12,6.583333333333333,65.85365853658537
+"Television, Radio and Film",Tutoring,39,12,3.25,65.85365853658537
+Undecided,Instructional Assistant,12,NA,NA,77.77777777777779
